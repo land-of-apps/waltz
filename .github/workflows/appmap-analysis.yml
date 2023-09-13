@@ -48,6 +48,7 @@ jobs:
       uses: getappmap/install-action@v1
       with:
         project-type: maven
+        install-appmap-library: false
 
     - name: Build with Maven
       run: mvn -Dmaven.test.failure.ignore=true -B -ntp -s .build.settings.xml -Pbuild-postgres,waltz-postgres,integration-tests clean test;
