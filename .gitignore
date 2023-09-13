@@ -21,3 +21,5 @@ npm-debug.log
 /waltz-ng/.vscode/
 pom.xml.versionsBackup
 /waltz-test-common/screenshots/
+.appmap
+tmp/appmap
