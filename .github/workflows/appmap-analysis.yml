@@ -42,6 +42,22 @@ jobs:
         path: ~/.m2/repository
         key: ${{ runner.os }}-m2
         restore-keys: ${{ runner.os }}-m2
+    
+    - name: Install AppMap tools
+      id: install-appmap
+      uses: getappmap/install-action@v1
+      with:
+        project-type: maven
 
     - name: Build with Maven
       run: mvn -Dmaven.test.failure.ignore=true -B -ntp -s .build.settings.xml -Pbuild-postgres,waltz-postgres,integration-tests clean test;
+
+    - name: Move AppMaps to central Dir
+      if: always()
+      run: |
+        mkdir -p tmp/appmap/junit && mv -v */target/appmap/junit/* tmp/appmap/junit/
+
+    - name: Archive AppMaps
+      uses: getappmap/archive-action@v1
+      with:
+        revision: ${{ github.event.pull_request.base.sha }}
