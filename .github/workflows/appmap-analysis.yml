@@ -3,11 +3,16 @@
 
 name: AppMap Analysis
 
-on: 
+on:
   pull_request:
+  push:
+    branches:
+      - main # Change this to the name of the mainline branch
+  schedule:
+    - cron: '0 0 * * 0'
 
 jobs:
-  build:
+  test:
 
     runs-on: ubuntu-latest
 
@@ -21,12 +26,12 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready 
-          --health-interval 10s 
-          --health-timeout 5s 
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
           --health-retries 5
 
-    steps:     
+    steps:
     - uses: actions/checkout@v4
 
     - name: Set up JDK 17
@@ -36,13 +41,13 @@ jobs:
         distribution: 'oracle'
         cache: 'maven'
 
-    - name: Cache Maven packages    
+    - name: Cache Maven packages
       uses: actions/cache@v1
       with:
         path: ~/.m2/repository
         key: ${{ runner.os }}-m2
         restore-keys: ${{ runner.os }}-m2
-    
+
     - name: Install AppMap tools
       id: install-appmap
       uses: getappmap/install-action@v1
@@ -58,7 +63,19 @@ jobs:
       run: |
         mkdir -p tmp/appmap/junit && mv -v */target/appmap/junit/* tmp/appmap/junit/
 
-    - name: Archive AppMaps
-      uses: getappmap/archive-action@v1
+    - name: Save AppMaps
+      uses: actions/cache/save@v3
+      if: always()
       with:
-        revision: ${{ github.event.pull_request.base.sha }}
+        path: ${{ steps.install-appmap.outputs.appmap-dir }}
+        key: appmaps-${{ github.sha }}-${{ github.run_attempt }}
+
+  appmap-analysis:
+    if: always()
+    needs: [ test ]
+    uses: getappmap/analyze-action/.github/workflows/appmap-analysis.yml@v1
+    permissions:
+      actions: read
+      contents: read
+      checks: write
+      pull-requests: write
