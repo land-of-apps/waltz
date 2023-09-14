@@ -61,7 +61,7 @@ jobs:
     - name: Move AppMaps to central Dir
       if: always()
       run: |
-        mkdir -p tmp/appmap/junit && mv -v */target/appmap/junit/* tmp/appmap/junit/
+        mkdir -p tmp/appmap/junit && mv -v */tmp/appmap/junit/* tmp/appmap/junit/
 
     - name: Save AppMaps
       uses: actions/cache/save@v3
