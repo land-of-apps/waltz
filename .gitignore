@@ -23,3 +23,4 @@ pom.xml.versionsBackup
 /waltz-test-common/screenshots/
 .appmap
 tmp/appmap
+/waltz-ng/mocha-test-results.txt

@@ -25,6 +25,8 @@ import org.finos.waltz.model.EntityKind;
 import org.finos.waltz.model.scheduled_job.JobKey;
 import org.finos.waltz.model.scheduled_job.JobLifecycleStatus;
 import org.finos.waltz.service.attestation.AttestationRunService;
+import org.finos.waltz.service.complexity.ComplexityService;
+import org.finos.waltz.service.cost.CostService;
 import org.finos.waltz.service.entity_hierarchy.EntityHierarchyService;
 import org.finos.waltz.service.flow_classification_rule.FlowClassificationRuleService;
 import org.finos.waltz.service.logical_flow.LogicalFlowService;
@@ -61,36 +63,45 @@ public class ScheduledJobService {
     private final SurveyInstanceService surveyInstanceService;
 
     private final ReportGridFilterViewService reportGridFilterViewService;
+    private final CostService costService;
+
+    private final ComplexityService complexityService;
 
 
     @Autowired
-    public ScheduledJobService(DataTypeUsageService dataTypeUsageService,
+    public ScheduledJobService(AttestationRunService attestationRunService,
+                               ComplexityService complexityService,
+                               CostService costService,
+                               DataTypeUsageService dataTypeUsageService,
                                EntityHierarchyService entityHierarchyService,
                                FlowClassificationRuleService flowClassificationRuleService,
                                LogicalFlowService logicalFlowService,
                                PhysicalSpecDataTypeService physicalSpecDataTypeService,
+                               ReportGridFilterViewService reportGridFilterViewService,
                                ScheduledJobDao scheduledJobDao,
-                               AttestationRunService attestationRunService,
-                               SurveyInstanceService surveyInstanceService,
-                               ReportGridFilterViewService reportGridFilterViewService) {
+                               SurveyInstanceService surveyInstanceService) {
 
+        checkNotNull(attestationRunService, "attestationRunService cannot be null");
+        checkNotNull(complexityService, "complexityService cannot be null");
+        checkNotNull(costService, "costService cannot be null");
         checkNotNull(dataTypeUsageService, "dataTypeUsageService cannot be null");
         checkNotNull(flowClassificationRuleService, "flowClassificationRuleService cannot be null");
         checkNotNull(logicalFlowService, "logicalFlowService cannot be null");
         checkNotNull(physicalSpecDataTypeService, "physicalSpecDataTypeService cannot be null");
-        checkNotNull(scheduledJobDao, "scheduledJobDao cannot be null");
-        checkNotNull(attestationRunService, "attestationRunService cannot be null");
         checkNotNull(reportGridFilterViewService, "reportGridFilterViewService cannot be null");
+        checkNotNull(scheduledJobDao, "scheduledJobDao cannot be null");
         checkNotNull(surveyInstanceService, "surveyInstanceService cannot be null");
 
+        this.attestationRunService = attestationRunService;
+        this.complexityService = complexityService;
+        this.costService = costService;
         this.dataTypeUsageService = dataTypeUsageService;
         this.entityHierarchyService = entityHierarchyService;
         this.flowClassificationRuleService = flowClassificationRuleService;
         this.logicalFlowService = logicalFlowService;
         this.physicalSpecDataTypeService = physicalSpecDataTypeService;
-        this.scheduledJobDao = scheduledJobDao;
-        this.attestationRunService = attestationRunService;
         this.reportGridFilterViewService = reportGridFilterViewService;
+        this.scheduledJobDao = scheduledJobDao;
         this.surveyInstanceService = surveyInstanceService;
     }
 
@@ -141,6 +152,12 @@ public class ScheduledJobService {
 
         runIfNeeded(JobKey.REPORT_GRID_RECALCULATE_APP_GROUPS_FROM_FILTERS,
                 (jk) -> reportGridFilterViewService.generateAppGroupsFromFilter());
+
+        runIfNeeded(JobKey.ALLOCATED_COSTS_POPULATOR,
+                (jk) -> costService.populateAllocatedCosts());
+
+        runIfNeeded(JobKey.COMPLEXITY_REBUILD_MEASURABLE,
+                (jk) -> complexityService.populateMeasurableComplexities());
     }
 
 
