@@ -4,13 +4,10 @@
 name: AppMap Analysis
 
 on: 
-  pull_request:
   push:
     branches:
-      - master
-  schedule:
-    - cron: '0 0 * * 0'
-
+      - actions-test
+  
 jobs:
   test:
 
@@ -58,22 +55,19 @@ jobs:
     - name: Build with Maven
       run: mvn -Dmaven.test.failure.ignore=true -B -ntp -s .build.settings.xml -Pbuild-postgres,waltz-postgres,integration-tests clean test;
 
-    - name: Move AppMaps to central Dir
-      if: always()
-      run: |
-        mkdir -p tmp/appmap/junit && mv -v */tmp/appmap/junit/* tmp/appmap/junit/
-
     - name: Save AppMaps
       uses: actions/cache/save@v3
       if: always()
       with:
-        path: ${{ steps.install-appmap.outputs.appmap-dir }}
+        path: waltz-service/tmp/appmap
         key: appmaps-${{ github.sha }}-${{ github.run_attempt }}
   
   appmap-analysis:
     if: always()
     needs: [test] # You may need to change this to match the name of the step that runs your tests.
-    uses: getappmap/analyze-action/.github/workflows/appmap-analysis.yml@v1
+    uses: getappmap/analyze-action/.github/workflows/appmap-analysis.yml@feat/directory
+    with:
+      directory: waltz-service
     permissions:
       actions: read
       contents: read
