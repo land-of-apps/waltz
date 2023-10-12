@@ -65,7 +65,7 @@ jobs:
   appmap-analysis:
     if: always()
     needs: [test] # You may need to change this to match the name of the step that runs your tests.
-    uses: getappmap/analyze-action/.github/workflows/appmap-analysis.yml@feat/directory
+    uses: getappmap/analyze-action/.github/workflows/appmap-analysis.yml@v1
     with:
       directory: waltz-service
     permissions:
