@@ -7,6 +7,12 @@ on:
   push:
     branches:
       - actions-test
+
+permissions:
+      contents: read
+      actions: read
+      checks: write
+      pull-requests: write
   
 jobs:
   test:
@@ -46,7 +52,6 @@ jobs:
         restore-keys: ${{ runner.os }}-m2
     
     - name: Install AppMap tools
-      id: install-appmap
       uses: getappmap/install-action@v1
       with:
         project-type: maven
@@ -61,16 +66,43 @@ jobs:
       with:
         path: waltz-service/tmp/appmap
         key: appmaps-${{ github.sha }}-${{ github.run_attempt }}
-  
-  appmap-analysis:
-    if: always()
-    needs: [test] # You may need to change this to match the name of the step that runs your tests.
-    uses: getappmap/analyze-action/.github/workflows/appmap-analysis.yml@v1
-    with:
-      directory: waltz-service
-    permissions:
-      actions: read
-      contents: read
-      checks: write
-      pull-requests: write
     
+  analyze:
+    if: always()
+    needs: [test] 
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Install AppMap tools
+        id: install-appmap
+        uses: getappmap/install-action@v1
+        with:
+          directory: waltz-service
+          install-appmap-library: false
+
+      - name: Restore AppMaps
+        uses: actions/cache/restore@v3
+        with:
+          path: waltz-service
+          key: appmaps-${{ github.sha }}-${{ github.run_attempt }}
+
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
+
+      - name: Archive AppMaps
+        if: github.event_name != 'pull_request'
+        uses: getappmap/archive-action@v1
+        with:
+          directory: waltz-service
+
+      - name: Analyze AppMaps
+        uses: getappmap/analyze-action@v1
+        if: github.event_name == 'pull_request'
+        with:
+          directory: waltz-service
+          base-revision: ${{ github.event.pull_request.base.sha }}
+          head-revision: ${{ github.event.pull_request.head.sha }}
