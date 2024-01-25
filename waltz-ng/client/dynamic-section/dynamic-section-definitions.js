@@ -449,8 +449,17 @@ const taxonomyChangesSection = {
     componentId: "taxonomy-changes-section",
     name: "Taxonomy Changes",
     icon: "cog",
-    description: " This section list any formal changes against this taxonomy. These changes are ones that have been defined and applied in Waltz.",
+    description: " This section lists any formal changes against this taxonomy. These changes are ones that have been defined and applied in Waltz.",
     id: 10030,
+};
+
+
+const dataTypeDecoratorSection = {
+    componentId: "data-type-decorator-section",
+    name: "Data Types",
+    icon: "qrcode",
+    description: "Data Types decorating this entity",
+    id: 10040,
 };
 
 
@@ -470,6 +479,7 @@ export const dynamicSections = {
     companionAppRulesSection,
     companionDataTypeRulesSection,
     dataFlowSection,
+    dataTypeDecoratorSection,
     dataTypeFlowSection,
     dataTypeOriginatorsSection,
     entityAttestationSection,
@@ -540,6 +550,7 @@ const appSections = [
 
 const actorSections = [
     appsSection,
+    assessmentRatingSection,
     bookmarksSection,
     changeInitiativeSection,
     dataFlowSection,
@@ -616,6 +627,16 @@ const measurableSections = [
     relatedDataTypesSection,
     changeLogSection
 ];
+
+
+const measurableRatingSections = [
+    bookmarksSection,
+    assessmentRatingSection,
+    entityNamedNotesSection,
+    involvedPeopleSection,
+    changeLogSection
+];
+
 
 const personSections = [
     bookmarksSection,
@@ -763,6 +784,7 @@ const physicalFlowSections = [
 const logicalDataFlowSections = [
     assessmentRatingSection,
     bookmarksSection,
+    dataTypeDecoratorSection,
     entityDiagramsSection,
     entityNamedNotesSection,
     physicalFlowSection,
@@ -822,6 +844,7 @@ const databaseSections = [
 ];
 
 const flowClassificationRuleSections = [
+    assessmentRatingSection,
     bookmarksSection,
     companionAppRulesSection,
     companionDataTypeRulesSection,
@@ -882,6 +905,7 @@ export const dynamicSectionsByKind = {
     "main.licence.view": licenceSections,
     "main.logical-flow.view": logicalDataFlowSections,
     "main.measurable.view": measurableSections,
+    "main.measurable-rating.view": measurableRatingSections,
     "main.org-unit.view": orgUnitSections,
     "main.person.id": personSections,
     "main.person.userId": personSections,

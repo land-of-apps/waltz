@@ -22,10 +22,34 @@ function store($http, baseApiUrl) {
 
     const baseUrl = `${baseApiUrl}/measurable-rating`;
 
+    const getById = (id) => {
+        return $http
+            .get(`${baseUrl}/id/${id}`)
+            .then(d => d.data);
+    };
+
+    const getViewById = (id) => {
+        return $http
+            .get(`${baseUrl}/id/${id}/view`)
+            .then(d => d.data);
+    };
+
     const findForEntityReference = (ref) => {
         checkIsEntityRef(ref);
         return $http
             .get(`${baseUrl}/entity/${ref.kind}/${ref.id}`)
+            .then(d => d.data);
+    };
+
+    const getViewForEntity = (ref) => {
+        return $http
+            .get(`${baseUrl}/entity/${ref.kind}/${ref.id}/view`)
+            .then(d => d.data);
+    };
+
+    const getViewByCategoryAndAppSelector = (categoryId, selector) => {
+        return $http
+            .post(`${baseUrl}/category/${categoryId}/view`, selector)
             .then(d => d.data);
     };
 
@@ -105,6 +129,10 @@ function store($http, baseApiUrl) {
     };
 
     return {
+        getById,
+        getViewById,
+        getViewForEntity,
+        getViewByCategoryAndAppSelector,
         findByMeasurableSelector,
         findByAppSelector,
         findByCategory,
@@ -128,6 +156,21 @@ const serviceName = "MeasurableRatingStore";
 
 
 export const MeasurableRatingStore_API = {
+    getById: {
+        serviceName,
+        serviceFnName: "getById",
+        description: "finds measurable rating by id"
+    },
+    getViewById: {
+        serviceName,
+        serviceFnName: "getViewById",
+        description: "finds measurable rating, with measurable, decom, and replacement details by id"
+    },
+    getViewForEntity: {
+        serviceName,
+        serviceFnName: "getViewForEntity",
+        description: "finds all details related to the measurable ratings for an entity"
+    },
     findByMeasurableSelector: {
         serviceName,
         serviceFnName: "findByMeasurableSelector",
@@ -137,6 +180,11 @@ export const MeasurableRatingStore_API = {
         serviceName,
         serviceFnName: "findByAppSelector",
         description: "finds measurables by app selector"
+    },
+    getViewByCategoryAndAppSelector: {
+        serviceName,
+        serviceFnName: "getViewByCategoryAndAppSelector",
+        description: "finds measurable ratings and primary assessments for ratings using an app id selector limited to a category"
     },
     findByCategory: {
         serviceName,

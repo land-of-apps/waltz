@@ -53,32 +53,30 @@ export function stringToRef(s) {
 }
 
 
-export function toEntityRef(obj, kind = obj.kind) {
-
-    const ref = {
+export function toEntityRef(obj) {
+    return {
         id: obj.id,
-        kind,
+        kind: obj.kind,
         name: obj.name,
+        externalId: obj.externalId,
         description: obj.description,
         entityLifecycleStatus: obj.entityLifecycleStatus
     };
+}
 
-    checkIsEntityRef(ref);
 
-    return ref;
+export function toEntityRefWithKind(obj, kind) {
+    return toEntityRef(Object.assign({}, obj, {kind}));
 }
 
 
 export function mkRef(kind, id, name, description) {
-    const ref = {
+    return {
         kind,
         id,
         name,
         description
     };
-
-    checkIsEntityRef(ref);
-    return ref;
 }
 
 
@@ -128,6 +126,7 @@ function getEntityFromData(kind, data) {
             return data;
     }
 }
+
 
 export function loadEntity(serviceBroker, entityRef) {
     checkIsEntityRef(entityRef);

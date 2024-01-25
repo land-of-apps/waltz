@@ -18,7 +18,6 @@
 
 package org.finos.waltz.web;
 
-import org.eclipse.jetty.http.HttpStatus;
 import org.finos.waltz.common.LoggingUtilities;
 import org.finos.waltz.common.exception.DuplicateKeyException;
 import org.finos.waltz.common.exception.InsufficientPrivelegeException;
@@ -41,22 +40,20 @@ import spark.Response;
 import spark.Spark;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.TimeZone;
 
 import static java.lang.String.format;
-import static org.finos.waltz.web.WebUtilities.reportException;
 import static org.finos.waltz.common.DateTimeUtilities.UTC;
 import static org.finos.waltz.web.WebUtilities.reportException;
-import static spark.Spark.after;
-import static spark.Spark.before;
-import static spark.Spark.options;
-import static spark.Spark.port;
+import static spark.Spark.*;
 
 public class Main {
 
     private static final Logger LOG = LoggerFactory.getLogger(Main.class);
     private final static String GZIP_ENABLED_NAME = "server.gzip.enabled";
     private final static String GZIP_MIN_SIZE_NAME = "server.gzip.minimum-size";
+    private final static String OAUTH_PROVIDER_DETAILS = "oauth.provider.details";
 
     private static AnnotationConfigApplicationContext ctx;
 
@@ -78,7 +75,7 @@ public class Main {
 
     private void startHttpServer() {
         String listenPortStr = System.getProperty("waltz.port", "8443");
-        boolean sslEnabled = Boolean.valueOf(System.getProperty("waltz.ssl.enabled", "false"));
+        boolean sslEnabled = Boolean.parseBoolean(System.getProperty("waltz.ssl.enabled", "false"));
 
         String home = System.getProperty("user.home");
 
@@ -114,6 +111,17 @@ public class Main {
         LoggingUtilities.configureLogging();
 
         ctx = new AnnotationConfigApplicationContext(DIConfiguration.class);
+
+        get("api/oauthdetails", (req, resp) -> {
+            resp.header("Content-Type", "application/javascript");
+            SettingsService settingsService = ctx.getBean(SettingsService.class);
+
+            Optional<String> OauthProviderDetails = Optional.of(settingsService
+                    .getValue(OAUTH_PROVIDER_DETAILS)
+                    .orElse("{name : null}"));
+
+            return "const oauthdetails = " + OauthProviderDetails.get() + ";";
+        });
 
         Map<String, Endpoint> endpoints = ctx.getBeansOfType(Endpoint.class);
         endpoints.forEach((name, endpoint) -> {

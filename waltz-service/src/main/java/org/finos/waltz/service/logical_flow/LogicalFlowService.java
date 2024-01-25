@@ -23,9 +23,14 @@ import org.finos.waltz.data.DBExecutorPoolInterface;
 import org.finos.waltz.data.application.ApplicationIdSelectorFactory;
 import org.finos.waltz.data.data_type.DataTypeIdSelectorFactory;
 import org.finos.waltz.data.datatype_decorator.LogicalFlowDecoratorDao;
+import org.finos.waltz.data.datatype_decorator.PhysicalSpecDecoratorDao;
 import org.finos.waltz.data.logical_flow.LogicalFlowDao;
 import org.finos.waltz.data.logical_flow.LogicalFlowIdSelectorFactory;
 import org.finos.waltz.data.logical_flow.LogicalFlowStatsDao;
+import org.finos.waltz.data.physical_flow.PhysicalFlowDao;
+import org.finos.waltz.data.physical_flow.PhysicalFlowIdSelectorFactory;
+import org.finos.waltz.data.physical_specification.PhysicalSpecificationDao;
+import org.finos.waltz.data.physical_specification.PhysicalSpecificationIdSelectorFactory;
 import org.finos.waltz.model.EntityReference;
 import org.finos.waltz.model.HierarchyQueryScope;
 import org.finos.waltz.model.IdProvider;
@@ -33,25 +38,34 @@ import org.finos.waltz.model.IdSelectionOptions;
 import org.finos.waltz.model.Operation;
 import org.finos.waltz.model.Severity;
 import org.finos.waltz.model.UserTimestamp;
+import org.finos.waltz.model.assessment_definition.AssessmentDefinition;
+import org.finos.waltz.model.assessment_rating.AssessmentRating;
 import org.finos.waltz.model.changelog.ChangeLog;
 import org.finos.waltz.model.changelog.ImmutableChangeLog;
 import org.finos.waltz.model.datatype.DataType;
+import org.finos.waltz.model.datatype.DataTypeDecorator;
 import org.finos.waltz.model.datatype.ImmutableDataTypeDecorator;
 import org.finos.waltz.model.logical_flow.AddLogicalFlowCommand;
 import org.finos.waltz.model.logical_flow.ImmutableLogicalFlow;
 import org.finos.waltz.model.logical_flow.ImmutableLogicalFlowGraphSummary;
 import org.finos.waltz.model.logical_flow.ImmutableLogicalFlowStatistics;
+import org.finos.waltz.model.logical_flow.ImmutableLogicalFlowView;
 import org.finos.waltz.model.logical_flow.LogicalFlow;
 import org.finos.waltz.model.logical_flow.LogicalFlowGraphSummary;
 import org.finos.waltz.model.logical_flow.LogicalFlowMeasures;
 import org.finos.waltz.model.logical_flow.LogicalFlowStatistics;
+import org.finos.waltz.model.logical_flow.LogicalFlowView;
+import org.finos.waltz.model.physical_flow.PhysicalFlow;
+import org.finos.waltz.model.physical_specification.PhysicalSpecification;
 import org.finos.waltz.model.rating.AuthoritativenessRatingValue;
+import org.finos.waltz.model.rating.RatingSchemeItem;
 import org.finos.waltz.model.tally.TallyPack;
+import org.finos.waltz.service.assessment_definition.AssessmentDefinitionService;
+import org.finos.waltz.service.assessment_rating.AssessmentRatingService;
 import org.finos.waltz.service.changelog.ChangeLogService;
 import org.finos.waltz.service.data_type.DataTypeService;
-import org.finos.waltz.service.involvement.InvolvementService;
-import org.finos.waltz.service.permission.PermissionGroupService;
 import org.finos.waltz.service.permission.permission_checker.FlowPermissionChecker;
+import org.finos.waltz.service.rating_scheme.RatingSchemeService;
 import org.finos.waltz.service.usage_info.DataTypeUsageService;
 import org.jooq.Record1;
 import org.jooq.Select;
@@ -80,12 +94,17 @@ import static org.finos.waltz.common.CollectionUtilities.isEmpty;
 import static org.finos.waltz.common.DateTimeUtilities.nowUtc;
 import static org.finos.waltz.common.ListUtilities.newArrayList;
 import static org.finos.waltz.common.SetUtilities.asSet;
+import static org.finos.waltz.common.SetUtilities.filter;
 import static org.finos.waltz.common.SetUtilities.fromCollection;
 import static org.finos.waltz.common.SetUtilities.hasIntersection;
 import static org.finos.waltz.common.SetUtilities.map;
+import static org.finos.waltz.common.SetUtilities.union;
 import static org.finos.waltz.model.EntityKind.DATA_TYPE;
 import static org.finos.waltz.model.EntityKind.LOGICAL_DATA_FLOW;
+import static org.finos.waltz.model.EntityKind.PHYSICAL_FLOW;
+import static org.finos.waltz.model.EntityKind.PHYSICAL_SPECIFICATION;
 import static org.finos.waltz.model.EntityReference.mkRef;
+import static org.finos.waltz.model.utils.IdUtilities.toIds;
 import static org.jooq.lambda.tuple.Tuple.tuple;
 
 
@@ -101,13 +120,20 @@ public class LogicalFlowService {
     private final LogicalFlowDao logicalFlowDao;
     private final LogicalFlowStatsDao logicalFlowStatsDao;
     private final LogicalFlowDecoratorDao logicalFlowDecoratorDao;
-    private final InvolvementService involvementService;
-    private final PermissionGroupService permissionGroupService;
     private final FlowPermissionChecker flowPermissionChecker;
+    private final PhysicalSpecDecoratorDao physicalSpecDecoratorDao;
 
+    private final AssessmentRatingService assessmentRatingService;
+    private final AssessmentDefinitionService assessmentDefinitionService;
+
+    private final PhysicalFlowDao physicalFlowDao;
+    private final PhysicalSpecificationDao physicalSpecificationDao;
+    private final RatingSchemeService ratingSchemeService;
     private final ApplicationIdSelectorFactory appIdSelectorFactory = new ApplicationIdSelectorFactory();
     private final LogicalFlowIdSelectorFactory logicalFlowIdSelectorFactory = new LogicalFlowIdSelectorFactory();
     private final DataTypeIdSelectorFactory dataTypeIdSelectorFactory = new DataTypeIdSelectorFactory();
+    private final PhysicalFlowIdSelectorFactory physicalFlowIdSelectorFactory = new PhysicalFlowIdSelectorFactory();
+    private final PhysicalSpecificationIdSelectorFactory physicalSpecificationIdSelectorFactory = new PhysicalSpecificationIdSelectorFactory();
 
 
     @Autowired
@@ -118,10 +144,16 @@ public class LogicalFlowService {
                               LogicalFlowDao logicalFlowDao,
                               LogicalFlowStatsDao logicalFlowStatsDao,
                               LogicalFlowDecoratorDao logicalFlowDecoratorDao,
-                              InvolvementService involvementService,
-                              PermissionGroupService permissionGroupService,
-                              FlowPermissionChecker flowPermissionChecker) {
+                              FlowPermissionChecker flowPermissionChecker,
+                              PhysicalSpecDecoratorDao physicalSpecDecoratorDao,
+                              AssessmentRatingService assessmentRatingService,
+                              AssessmentDefinitionService assessmentDefinitionService,
+                              PhysicalFlowDao physicalFlowDao,
+                              PhysicalSpecificationDao physicalSpecificationDao,
+                              RatingSchemeService ratingSchemeService) {
 
+        checkNotNull(assessmentDefinitionService, "assessmentDefinitionService cannot be null");
+        checkNotNull(assessmentRatingService, "assessmentRatingService cannot be null");
         checkNotNull(changeLogService, "changeLogService cannot be null");
         checkNotNull(dbExecutorPool, "dbExecutorPool cannot be null");
         checkNotNull(dataTypeService, "dataTypeService cannot be null");
@@ -129,20 +161,26 @@ public class LogicalFlowService {
         checkNotNull(logicalFlowDao, "logicalFlowDao must not be null");
         checkNotNull(logicalFlowDecoratorDao, "logicalFlowDataTypeDecoratorDao cannot be null");
         checkNotNull(logicalFlowStatsDao, "logicalFlowStatsDao cannot be null");
-        checkNotNull(involvementService, "involvementService cannot be null");
-        checkNotNull(permissionGroupService, "permissionGroupService cannot be null");
+        checkNotNull(physicalFlowDao, "physicalFlowDao cannot be null");
+        checkNotNull(physicalSpecificationDao, "physicalSpecificationDao cannot be null");
+        checkNotNull(physicalSpecDecoratorDao, "physicalSpecDecoratorDao cannot be null");
         checkNotNull(flowPermissionChecker, "flowPermissionChecker cannot be null");
+        checkNotNull(ratingSchemeService, "ratingSchemeService cannot be null");
 
+        this.assessmentDefinitionService = assessmentDefinitionService;
+        this.assessmentRatingService = assessmentRatingService;
         this.changeLogService = changeLogService;
         this.dataTypeService = dataTypeService;
-        this.flowPermissionChecker = flowPermissionChecker;
         this.dataTypeUsageService = dataTypeUsageService;
         this.dbExecutorPool = dbExecutorPool;
+        this.flowPermissionChecker = flowPermissionChecker;
         this.logicalFlowDao = logicalFlowDao;
         this.logicalFlowStatsDao = logicalFlowStatsDao;
         this.logicalFlowDecoratorDao = logicalFlowDecoratorDao;
-        this.involvementService = involvementService;
-        this.permissionGroupService = permissionGroupService;
+        this.physicalFlowDao = physicalFlowDao;
+        this.physicalSpecificationDao = physicalSpecificationDao;
+        this.physicalSpecDecoratorDao = physicalSpecDecoratorDao;
+        this.ratingSchemeService = ratingSchemeService;
     }
 
 
@@ -217,7 +255,6 @@ public class LogicalFlowService {
 
         return logicalFlow;
     }
-
 
 
     public Set<LogicalFlow> addFlows(Collection<AddLogicalFlowCommand> addCmds, String username) {
@@ -455,5 +492,56 @@ public class LogicalFlowService {
                 .map(EntityReference::name)
                 .map(Optional::get)
                 .collect(Collectors.joining(", "));
+    }
+
+
+    public LogicalFlowView getFlowView(IdSelectionOptions idSelectionOptions) {
+
+        Select<Record1<Long>> flowSelector = logicalFlowIdSelectorFactory.apply(idSelectionOptions);
+        Select<Record1<Long>> physFlowSelector = physicalFlowIdSelectorFactory.apply(idSelectionOptions);
+        Select<Record1<Long>> physSpecSelector = physicalSpecificationIdSelectorFactory.apply(idSelectionOptions);
+
+        List<LogicalFlow> logicalFlows = logicalFlowDao.findBySelector(flowSelector);
+        Collection<PhysicalFlow> physicalFlows = physicalFlowDao.findBySelector(physFlowSelector);
+        Set<PhysicalSpecification> specs = physicalSpecificationDao.findBySelector(physSpecSelector);
+
+        Set<DataTypeDecorator> logicalFlowDecorators = logicalFlowDecoratorDao.findByLogicalFlowIdSelector(flowSelector);
+
+        Set<AssessmentDefinition> logicalFlowAssessmentDefs = assessmentDefinitionService.findByPrimaryDefinitionsForKind(LOGICAL_DATA_FLOW, Optional.empty());
+        Set<AssessmentDefinition> physicalFlowAssessmentDefs = assessmentDefinitionService.findByPrimaryDefinitionsForKind(PHYSICAL_FLOW, Optional.empty());
+        Set<AssessmentDefinition> physicalSpecAssessmentDefs = assessmentDefinitionService.findByPrimaryDefinitionsForKind(PHYSICAL_SPECIFICATION, Optional.empty());
+
+        List<AssessmentRating> lfRatings = assessmentRatingService.findByTargetKindForRelatedSelector(LOGICAL_DATA_FLOW, idSelectionOptions);
+        List<AssessmentRating> pfRatings = assessmentRatingService.findByTargetKindForRelatedSelector(PHYSICAL_FLOW, idSelectionOptions);
+        List<AssessmentRating> psRatings = assessmentRatingService.findByTargetKindForRelatedSelector(PHYSICAL_SPECIFICATION, idSelectionOptions);
+
+        Set<AssessmentRating> logicalFlowAssessmentRatings = filter(lfRatings, d -> toIds(logicalFlowAssessmentDefs).contains(d.assessmentDefinitionId()));
+        Set<AssessmentRating> physicalFlowAssessmentRatings = filter(pfRatings, d -> toIds(physicalFlowAssessmentDefs).contains(d.assessmentDefinitionId()));
+        Set<AssessmentRating> physicalSpecAssessmentRatings = filter(psRatings, d -> toIds(physicalSpecAssessmentDefs).contains(d.assessmentDefinitionId()));
+
+        Set<RatingSchemeItem> ratingSchemeItems = ratingSchemeService.findRatingSchemeItemsByIds(
+            map(
+                union(
+                    logicalFlowAssessmentRatings,
+                    physicalFlowAssessmentRatings,
+                    physicalSpecAssessmentRatings),
+                AssessmentRating::ratingId));
+
+        List<DataTypeDecorator> specDecorators = physicalSpecDecoratorDao.findByEntityIdSelector(physSpecSelector, Optional.empty());
+
+        return ImmutableLogicalFlowView.builder()
+                .logicalFlows(fromCollection(logicalFlows))
+                .physicalFlows(physicalFlows)
+                .physicalSpecifications(specs)
+                .logicalFlowDataTypeDecorators(union(logicalFlowDecorators, specDecorators))
+                .physicalSpecificationDataTypeDecorators(specDecorators)
+                .logicalFlowAssessmentDefinitions(logicalFlowAssessmentDefs)
+                .physicalFlowAssessmentDefinitions(physicalFlowAssessmentDefs)
+                .physicalSpecificationAssessmentDefinitions(physicalSpecAssessmentDefs)
+                .logicalFlowRatings(logicalFlowAssessmentRatings)
+                .physicalFlowRatings(physicalFlowAssessmentRatings)
+                .physicalSpecificationRatings(physicalSpecAssessmentRatings)
+                .ratingSchemeItems(ratingSchemeItems)
+                .build();
     }
 }

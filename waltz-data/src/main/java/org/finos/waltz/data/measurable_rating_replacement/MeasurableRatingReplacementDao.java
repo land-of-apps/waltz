@@ -30,7 +30,9 @@ import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Record;
+import org.jooq.Record1;
 import org.jooq.RecordMapper;
+import org.jooq.Select;
 import org.jooq.impl.DSL;
 import org.jooq.lambda.tuple.Tuple2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +49,7 @@ import static org.finos.waltz.common.SetUtilities.asSet;
 import static org.finos.waltz.common.SetUtilities.union;
 import static org.finos.waltz.common.StringUtilities.notEmpty;
 import static org.finos.waltz.model.EntityReference.mkRef;
+import static org.finos.waltz.schema.Tables.MEASURABLE;
 import static org.finos.waltz.schema.Tables.MEASURABLE_CATEGORY;
 import static org.finos.waltz.schema.Tables.MEASURABLE_RATING;
 import static org.finos.waltz.schema.Tables.USER_ROLE;
@@ -136,6 +139,22 @@ public class MeasurableRatingReplacementDao {
                 .on(MEASURABLE_RATING.ID.eq(MEASURABLE_RATING_PLANNED_DECOMMISSION.MEASURABLE_RATING_ID))
                 .where(MEASURABLE_RATING.ENTITY_ID.eq(ref.id())
                         .and(MEASURABLE_RATING.ENTITY_KIND.eq(ref.kind().name())))
+                .fetchSet(TO_DOMAIN_MAPPER);
+    }
+
+    public Set<MeasurableRatingReplacement> findForCategoryAndSelector(Select<Record1<Long>> appIdSelector, long categoryId){
+        return dsl
+                .select(MEASURABLE_RATING_REPLACEMENT.fields())
+                .select(NAME_FIELD)
+                .from(MEASURABLE_RATING_REPLACEMENT)
+                .innerJoin(MEASURABLE_RATING_PLANNED_DECOMMISSION)
+                .on(MEASURABLE_RATING_PLANNED_DECOMMISSION.ID.eq(MEASURABLE_RATING_REPLACEMENT.DECOMMISSION_ID))
+                .innerJoin(MEASURABLE_RATING)
+                .on(MEASURABLE_RATING.ID.eq(MEASURABLE_RATING_PLANNED_DECOMMISSION.MEASURABLE_RATING_ID))
+                .innerJoin(MEASURABLE).on(MEASURABLE_RATING.MEASURABLE_ID.eq(MEASURABLE.ID)
+                        .and(MEASURABLE.MEASURABLE_CATEGORY_ID.eq(categoryId)))
+                .where(dsl.renderInlined(MEASURABLE_RATING.ENTITY_ID.in(appIdSelector)
+                        .and(MEASURABLE_RATING.ENTITY_KIND.eq(EntityKind.APPLICATION.name()))))
                 .fetchSet(TO_DOMAIN_MAPPER);
     }
 

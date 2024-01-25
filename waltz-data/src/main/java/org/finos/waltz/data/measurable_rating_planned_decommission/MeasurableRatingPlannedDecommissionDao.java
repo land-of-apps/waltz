@@ -37,7 +37,9 @@ import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Record;
+import org.jooq.Record1;
 import org.jooq.RecordMapper;
+import org.jooq.Select;
 import org.jooq.SelectOnConditionStep;
 import org.jooq.lambda.tuple.Tuple2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,6 +57,7 @@ import static org.finos.waltz.common.SetUtilities.union;
 import static org.finos.waltz.common.StringUtilities.firstChar;
 import static org.finos.waltz.common.StringUtilities.notEmpty;
 import static org.finos.waltz.model.EntityReference.mkRef;
+import static org.finos.waltz.schema.Tables.MEASURABLE;
 import static org.finos.waltz.schema.Tables.MEASURABLE_CATEGORY;
 import static org.finos.waltz.schema.Tables.USER_ROLE;
 import static org.finos.waltz.schema.tables.MeasurableRating.MEASURABLE_RATING;
@@ -144,6 +147,15 @@ public class MeasurableRatingPlannedDecommissionDao {
     }
 
 
+    public Set<MeasurableRatingPlannedDecommission> findForCategoryAndSelector(Select<Record1<Long>> appIdSelector, long categoryId){
+        return mkBaseQry()
+                .innerJoin(MEASURABLE).on(MEASURABLE_RATING.MEASURABLE_ID.eq(MEASURABLE.ID)
+                        .and(MEASURABLE.MEASURABLE_CATEGORY_ID.eq(categoryId)))
+                .where(dsl.renderInlined(MEASURABLE_RATING.ENTITY_ID.in(appIdSelector)))
+                .fetchSet(TO_DOMAIN_MAPPER);
+    }
+
+
     public Collection<MeasurableRatingPlannedDecommissionInfo> findByReplacingEntityRef(EntityReference ref) {
         return dsl
                 .select(MEASURABLE_RATING_PLANNED_DECOMMISSION.fields())
@@ -155,6 +167,31 @@ public class MeasurableRatingPlannedDecommissionDao {
                 .innerJoin(MEASURABLE_RATING).on(MEASURABLE_RATING_PLANNED_DECOMMISSION.MEASURABLE_RATING_ID.eq(MEASURABLE_RATING.ID))
                 .where(MEASURABLE_RATING_REPLACEMENT.ENTITY_ID.eq(ref.id()))
                 .and(MEASURABLE_RATING_REPLACEMENT.ENTITY_KIND.eq(ref.kind().name()))
+                .fetchSet(r -> {
+                    MeasurableRatingPlannedDecommission decom = MeasurableRatingPlannedDecommissionDao.TO_DOMAIN_MAPPER.map(r);
+                    MeasurableRating rating = readMeasurableRating(r);
+
+                    return ImmutableMeasurableRatingPlannedDecommissionInfo.builder()
+                            .decommission(decom)
+                            .measurableRating(rating)
+                            .build();
+                });
+    }
+
+
+    public Collection<MeasurableRatingPlannedDecommissionInfo> findForReplacingEntitySelectorAndCategory(Select<Record1<Long>> appIdSelector, Long categoryId) {
+        return dsl
+                .select(MEASURABLE_RATING_PLANNED_DECOMMISSION.fields())
+                .select(MEASURABLE_RATING.fields())
+                .select(ENTITY_NAME_FIELD)
+                .from(MEASURABLE_RATING_PLANNED_DECOMMISSION)
+                .innerJoin(MEASURABLE_RATING_REPLACEMENT)
+                    .on(MEASURABLE_RATING_REPLACEMENT.DECOMMISSION_ID.eq(MEASURABLE_RATING_PLANNED_DECOMMISSION.ID))
+                .innerJoin(MEASURABLE_RATING).on(MEASURABLE_RATING_PLANNED_DECOMMISSION.MEASURABLE_RATING_ID.eq(MEASURABLE_RATING.ID))
+                .innerJoin(MEASURABLE).on(MEASURABLE_RATING.MEASURABLE_ID.eq(MEASURABLE.ID)
+                        .and(MEASURABLE.MEASURABLE_CATEGORY_ID.eq(categoryId)))
+                .where(MEASURABLE_RATING_REPLACEMENT.ENTITY_ID.in(appIdSelector))
+                .and(MEASURABLE_RATING_REPLACEMENT.ENTITY_KIND.eq(EntityKind.APPLICATION.name()))
                 .fetchSet(r -> {
                     MeasurableRatingPlannedDecommission decom = MeasurableRatingPlannedDecommissionDao.TO_DOMAIN_MAPPER.map(r);
                     MeasurableRating rating = readMeasurableRating(r);
@@ -271,5 +308,12 @@ public class MeasurableRatingPlannedDecommissionDao {
         } else {
             return operationsForEntityAssessment;
         }
+    }
+
+
+    public MeasurableRatingPlannedDecommission getByMeasurableRatingId(Long ratingId) {
+        return mkBaseQry()
+                .where(MEASURABLE_RATING_PLANNED_DECOMMISSION.MEASURABLE_RATING_ID.eq(ratingId))
+                .fetchOne(TO_DOMAIN_MAPPER);
     }
 }

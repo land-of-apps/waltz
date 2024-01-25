@@ -30,6 +30,8 @@ import org.finos.waltz.model.EntityReference;
 import org.finos.waltz.model.Operation;
 import org.finos.waltz.model.command.DateFieldChange;
 import org.finos.waltz.model.measurable_rating_planned_decommission.MeasurableRatingPlannedDecommission;
+import org.jooq.Record1;
+import org.jooq.Select;
 import org.jooq.lambda.tuple.Tuple2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -71,8 +73,18 @@ public class MeasurableRatingPlannedDecommissionService {
     }
 
 
+    public Collection<MeasurableRatingPlannedDecommission> findForCategoryAndSelector(Select<Record1<Long>> appIdSelector, long categoryId) {
+        return measurableRatingPlannedDecommissionDao.findForCategoryAndSelector(appIdSelector, categoryId);
+    }
+
+
     public Collection<MeasurableRatingPlannedDecommissionInfo> findForReplacingEntityRef(EntityReference ref) {
         return measurableRatingPlannedDecommissionDao.findByReplacingEntityRef(ref);
+    }
+
+
+    public Collection<MeasurableRatingPlannedDecommissionInfo> findForReplacingEntitySelectorAndCategory(Select<Record1<Long>> appIdSelector, long categoryId) {
+        return measurableRatingPlannedDecommissionDao.findForReplacingEntitySelectorAndCategory(appIdSelector, categoryId);
     }
 
 
@@ -138,6 +150,11 @@ public class MeasurableRatingPlannedDecommissionService {
 
     public MeasurableRatingPlannedDecommission getById(Long decommId) {
         return measurableRatingPlannedDecommissionDao.getById(decommId);
+    }
+
+
+    public MeasurableRatingPlannedDecommission getByMeasurableRatingId(Long ratingId) {
+        return measurableRatingPlannedDecommissionDao.getByMeasurableRatingId(ratingId);
     }
 
 }

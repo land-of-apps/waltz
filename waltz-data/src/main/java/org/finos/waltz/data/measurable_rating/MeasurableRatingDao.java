@@ -20,6 +20,7 @@ package org.finos.waltz.data.measurable_rating;
 
 import org.finos.waltz.common.DateTimeUtilities;
 import org.finos.waltz.common.exception.NotFoundException;
+import org.finos.waltz.data.GenericSelector;
 import org.finos.waltz.data.InlineSelectFieldFactory;
 import org.finos.waltz.data.JooqUtilities;
 import org.finos.waltz.data.SelectorUtilities;
@@ -49,7 +50,6 @@ import org.jooq.Record;
 import org.jooq.Record1;
 import org.jooq.Record2;
 import org.jooq.Record3;
-import org.jooq.Record4;
 import org.jooq.Record9;
 import org.jooq.RecordMapper;
 import org.jooq.Select;
@@ -81,7 +81,13 @@ import static org.finos.waltz.common.SetUtilities.asSet;
 import static org.finos.waltz.common.SetUtilities.union;
 import static org.finos.waltz.common.StringUtilities.firstChar;
 import static org.finos.waltz.common.StringUtilities.notEmpty;
-import static org.finos.waltz.schema.Tables.*;
+import static org.finos.waltz.schema.Tables.ALLOCATION;
+import static org.finos.waltz.schema.Tables.CHANGE_LOG;
+import static org.finos.waltz.schema.Tables.ENTITY_HIERARCHY;
+import static org.finos.waltz.schema.Tables.MEASURABLE_CATEGORY;
+import static org.finos.waltz.schema.Tables.MEASURABLE_RATING_PLANNED_DECOMMISSION;
+import static org.finos.waltz.schema.Tables.RATING_SCHEME_ITEM;
+import static org.finos.waltz.schema.Tables.USER_ROLE;
 import static org.finos.waltz.schema.tables.Application.APPLICATION;
 import static org.finos.waltz.schema.tables.Measurable.MEASURABLE;
 import static org.finos.waltz.schema.tables.MeasurableRating.MEASURABLE_RATING;
@@ -118,6 +124,8 @@ public class MeasurableRatingDao {
                 .entityLifecycleStatus(readEnum(record.get(ENTITY_LIFECYCLE_FIELD), EntityLifecycleStatus.class, (s) -> EntityLifecycleStatus.REMOVED))
                 .build();
 
+        Long ratingId = record.get(RATING_SCHEME_ITEM.ID);
+
         return ImmutableMeasurableRating.builder()
                 .id(r.getId())
                 .entityReference(ref)
@@ -129,6 +137,7 @@ public class MeasurableRatingDao {
                 .lastUpdatedBy(r.getLastUpdatedBy())
                 .isReadOnly(r.getIsReadonly())
                 .isPrimary(r.getIsPrimary())
+                .ratingId(ratingId)
                 .build();
     };
 
@@ -243,6 +252,14 @@ public class MeasurableRatingDao {
                 .fetch(TO_DOMAIN_MAPPER);
     }
 
+
+    public List<MeasurableRating> findForCategoryAndSelector(Select<Record1<Long>> appIdSelector, long categoryId) {
+        return mkExtendedBaseQuery()
+                .where(dsl.renderInlined(MEASURABLE_CATEGORY.ID.eq(categoryId)
+                                .and(MEASURABLE_RATING.ENTITY_KIND.eq(EntityKind.APPLICATION.name())
+                                        .and(MEASURABLE_RATING.ENTITY_ID.in(appIdSelector)))))
+                .fetch(TO_DOMAIN_MAPPER);
+    }
 
     public MeasurableRating getById(long id) {
         return mkBaseQuery()
@@ -404,6 +421,20 @@ public class MeasurableRatingDao {
                 .select(ENTITY_NAME_FIELD)
                 .select(ENTITY_LIFECYCLE_FIELD)
                 .from(MEASURABLE_RATING);
+    }
+
+
+    private SelectJoinStep<Record> mkExtendedBaseQuery() {
+        return dsl
+                .select(MEASURABLE_RATING.fields())
+                .select(ENTITY_NAME_FIELD)
+                .select(ENTITY_LIFECYCLE_FIELD)
+                .select(RATING_SCHEME_ITEM.ID)
+                .from(MEASURABLE_RATING)
+                .innerJoin(MEASURABLE).on(MEASURABLE_RATING.MEASURABLE_ID.eq(MEASURABLE.ID))
+                .innerJoin(MEASURABLE_CATEGORY).on(MEASURABLE.MEASURABLE_CATEGORY_ID.eq(MEASURABLE_CATEGORY.ID))
+                .innerJoin(RATING_SCHEME_ITEM).on(MEASURABLE_RATING.RATING.eq(RATING_SCHEME_ITEM.CODE)
+                        .and(MEASURABLE_CATEGORY.RATING_SCHEME_ID.eq(RATING_SCHEME_ITEM.SCHEME_ID)));
     }
 
 
@@ -791,4 +822,11 @@ public class MeasurableRatingDao {
     }
 
 
+    public Set<MeasurableRating> findPrimaryRatingsForGenericSelector(GenericSelector selector) {
+        return mkExtendedBaseQuery()
+                .where(dsl.renderInlined(MEASURABLE_RATING.ENTITY_KIND.eq(selector.kind().name())
+                        .and(MEASURABLE_RATING.ENTITY_ID.in(selector.selector()))
+                        .and(MEASURABLE_RATING.IS_PRIMARY.isTrue())))
+                .fetchSet(TO_DOMAIN_MAPPER);
+    }
 }

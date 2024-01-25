@@ -269,6 +269,13 @@ export const entity = {
         description: null,
         position: 1600
     },
+    LOGICAL_DATA_FLOW_DATA_TYPE_DECORATOR: {
+        key: "LOGICAL_DATA_FLOW_DATA_TYPE_DECORATOR",
+        name: "Logical Flow Data Type",
+        icon: "barcode",
+        description: null,
+        position: 1650
+    },
     ORG_UNIT: {
         key: "ORG_UNIT",
         name: "Org Unit",
@@ -293,7 +300,7 @@ export const entity = {
     MEASURABLE_RATING: {
         key: "MEASURABLE_RATING",
         name: "Viewpoint Rating",
-        icon: undefined,
+        icon: "puzzle-piece",
         description: null,
         position: 1900
     },
@@ -324,6 +331,13 @@ export const entity = {
         icon: "file-text",
         description: null,
         position: 2100
+    },
+    PHYSICAL_SPEC_DATA_TYPE_DECORATOR: {
+        key: "PHYSICAL_SPEC_DATA_TYPE_DECORATOR",
+        name: "Physical Specification Data Type",
+        icon: "barcode",
+        description: null,
+        position: 2150
     },
     PHYSICAL_FLOW: {
         key: "PHYSICAL_FLOW",
