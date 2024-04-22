@@ -22,5 +22,6 @@ npm-debug.log
 pom.xml.versionsBackup
 /waltz-test-common/screenshots/
 .appmap
-tmp/appmap
+*/tmp/appmap
 /waltz-ng/mocha-test-results.txt
+
