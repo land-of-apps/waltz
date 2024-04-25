@@ -1,0 +1,6 @@
+name: waltz
+packages:
+  - path: org.finos.waltz
+    exclude:
+      - org.finos.waltz.common.Checks
+language: java
