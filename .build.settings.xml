@@ -25,25 +25,13 @@
     <profiles>
      
         <profile>
-            <id>build-postgres</id>
+            <id>dev-postgres</id>
             <activation><activeByDefault>false</activeByDefault></activation>
             <properties>
                 <database.url>jdbc:postgresql://localhost:5432/waltz</database.url>
-                <database.user>postgres</database.user>
-                <database.password>postgres</database.password>
+                <database.user>waltz</database.user>
+                <database.password>waltz</database.password>
                 <database.schema>public</database.schema>
-                <database.catalog></database.catalog>
-            </properties>
-        </profile>
-
-        <profile>
-            <id>build-mariadb</id>
-            <activation><activeByDefault>false</activeByDefault></activation>
-            <properties>
-                <database.url>jdbc:mysql://127.0.0.1:3306/waltz</database.url>
-                <database.user>root</database.user>
-                <database.password></database.password>
-                <database.schema>waltz</database.schema>
                 <database.catalog></database.catalog>
             </properties>
         </profile>
