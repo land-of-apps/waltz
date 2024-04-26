@@ -58,7 +58,6 @@ import static org.finos.waltz.schema.tables.LogicalFlow.LOGICAL_FLOW;
 import static org.finos.waltz.schema.tables.PhysicalSpecification.PHYSICAL_SPECIFICATION;
 import static spark.Spark.post;
 
-
 @Service
 public class PhysicalFlowExtractor extends CustomDataExtractor {
 
@@ -67,9 +66,7 @@ public class PhysicalFlowExtractor extends CustomDataExtractor {
     private static final List<Field<String>> SOURCE_AND_TARGET_NAME_AND_ASSET_CODE;
     private static final PhysicalFlowIdSelectorFactory physicalFlowIdSelectorFactory = new PhysicalFlowIdSelectorFactory();
 
-
     private final DSLContext dsl;
-
 
     static {
         Field<String> SOURCE_NAME_FIELD = InlineSelectFieldFactory.mkNameField(
@@ -105,7 +102,6 @@ public class PhysicalFlowExtractor extends CustomDataExtractor {
                 RECEIVER_NAME_AND_ASSET_CODE_FIELDS);
     }
 
-
     @Autowired
     public PhysicalFlowExtractor(DSLContext dsl) {
         this.dsl = dsl;
@@ -124,7 +120,6 @@ public class PhysicalFlowExtractor extends CustomDataExtractor {
                             fileName,
                             getTagsMap()));
         });
-
 
         post(WebUtilities.mkPath("data-extract", "physical-flows", "produces", ":kind", ":id"), (request, response) -> {
             EntityReference ref = WebUtilities.getEntityReference(request);
@@ -155,9 +150,8 @@ public class PhysicalFlowExtractor extends CustomDataExtractor {
         post(WebUtilities.mkPath("data-extract", "physical-flows", "by-selector"), (request, response) -> {
             IdSelectionOptions idSelectionOptions = WebUtilities.readIdSelectionOptionsFromBody(request);
             Select<Record1<Long>> idSelector = physicalFlowIdSelectorFactory.apply(idSelectionOptions);
-            Condition condition =
-                    PhysicalFlow.PHYSICAL_FLOW.ID.in(idSelector)
-                            .and(physicalFlowIdSelectorFactory.getLifecycleCondition(idSelectionOptions));
+            Condition condition = PhysicalFlow.PHYSICAL_FLOW.ID.in(idSelector)
+                    .and(physicalFlowIdSelectorFactory.getLifecycleCondition(idSelectionOptions));
             SelectConditionStep<Record> qry = getQuery(condition);
             Map<Long, List<String>> tags = getTagsMap();
 
@@ -184,11 +178,9 @@ public class PhysicalFlowExtractor extends CustomDataExtractor {
                 .fetchGroups(TAG_USAGE.ENTITY_ID, TAG.NAME);
     }
 
-
     private SelectConditionStep<Record> prepareAllFlowsQuery(EntityReference ref) {
         return (SelectConditionStep<Record>) prepareProducesQuery(ref).union(prepareConsumesQuery(ref));
     }
-
 
     private SelectConditionStep<Record> prepareProducesQuery(EntityReference ref) {
 
@@ -206,7 +198,6 @@ public class PhysicalFlowExtractor extends CustomDataExtractor {
         return getQuery(isProduces);
     }
 
-
     private SelectConditionStep<Record> prepareConsumesQuery(EntityReference ref) {
 
         Condition isConsumes = LOGICAL_FLOW.TARGET_ENTITY_ID.eq(ref.id())
@@ -217,7 +208,6 @@ public class PhysicalFlowExtractor extends CustomDataExtractor {
 
         return getQuery(isConsumes);
     }
-
 
     private SelectConditionStep<Record> getQuery(Condition condition) {
         EnumValue criticalityValue = ENUM_VALUE.as("criticality_value");
@@ -254,9 +244,9 @@ public class PhysicalFlowExtractor extends CustomDataExtractor {
     }
 
     private Tuple3<ExtractFormat, String, byte[]> preparePhysicalFlows(SelectConditionStep<Record> query,
-                                                                       ExtractFormat format,
-                                                                       String reportName,
-                                                                       Map<Long, List<String>> tags) throws IOException {
+            ExtractFormat format,
+            String reportName,
+            Map<Long, List<String>> tags) throws IOException {
 
         List<List<Object>> reportRows = prepareReportRows(query, tags);
 
@@ -268,12 +258,11 @@ public class PhysicalFlowExtractor extends CustomDataExtractor {
                 format,
                 reportName,
                 reportRows,
-                ListUtilities.append(headers, "Tags")
-        );
+                ListUtilities.append(headers, "Tags"));
     }
 
     private List<List<Object>> prepareReportRows(SelectConditionStep<Record> qry,
-                                                 Map<Long, List<String>> tags) {
+            Map<Long, List<String>> tags) {
         Result<Record> results = qry.fetch();
 
         return results
