@@ -4,3 +4,4 @@ packages:
     exclude:
       - org.finos.waltz.common.Checks
 language: java
+appmap_dir: tmp/appmap
