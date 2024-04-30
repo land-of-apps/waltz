@@ -11,8 +11,8 @@ mvn -s .build.settings.xml compile -P waltz-postgres,dev-postgres -f waltz-schem
 # build package
 mvn -s .build.settings.xml clean package -P waltz-postgres,dev-postgres -DskipTests=true
 # run the jar with appmap enabled
-java -javaagent:$HOME/.appmap/lib/java/appmap.jar -jar ./waltz-web/target/waltz-web-jar-with-dependencies.jar org.finos.waltz.web.Main
+java -javaagent:$HOME/.appmap/lib/java/appmap.jar -cp waltz-web/properties:waltz-local-config/src/main/resources:waltz-web/target/classes:./waltz-web/target/waltz-web-jar-with-dependencies.jar -Dwaltz.port=8080 -Dappmap.recording.requests=false -Dappmap.disableLogFile=true org.finos.waltz.web.Main
 
 # Open waltz (admin/password)
 # NOTE: Can take 5-10 seconds to respond via web
-http://localhost:8443
+http://localhost:8080

@@ -1,12 +1,13 @@
-# This is the AppMap configuration file.
-# For full documentation of this file for Java programs, see:
-# https://appland.com/docs/reference/appmap-java.html#configuration
-name: waltz
+name: "waltz"
+appmap_dir: "tmp/appmap"
 packages:
-  - path: org.finos.waltz
-# appmap-java init looks for source packages in src/main/java.
-# This folder was not found in your project, so no packages were auto-detected.
-# You can add your source packages by replacing the line above with lines like this:
-# packages:
-# - path: com.mycorp.pkg
-# - path: org.otherstuff.pkg
+- path: "liquibase"
+- path: "org.finos.waltz.common"
+- path: "org.finos.waltz.data"
+- path: "org.finos.waltz.model"
+- path: "org.finos.waltz.schema"
+- path: "org.finos.waltz.service"
+- path: "org.finos.waltz.web"
+- path: "org.finos.waltz"
+- path: "spark.template.freemarker"
+- path: "static"

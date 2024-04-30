@@ -24,3 +24,4 @@ pom.xml.versionsBackup
 /waltz-ng/mocha-test-results.txt
 **/tmp/appmap
 sql_warning.txt
+.idea
