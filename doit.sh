@@ -10,8 +10,10 @@ pg_restore -p 5432 -U waltz -h localhost -d waltz < ~/Downloads/postgres-dump-1.
 mvn -s .build.settings.xml compile -P waltz-postgres,dev-postgres -f waltz-schema/pom.xml -DskipTests=true
 # build package
 mvn -s .build.settings.xml clean package -P waltz-postgres,dev-postgres -DskipTests=true
+# create logback config
+cp waltz-web/src/main/resources/logback.example.xml ~/.waltz/waltz-logback.xml
 # run the jar with appmap enabled
-java -javaagent:$HOME/.appmap/lib/java/appmap.jar -cp waltz-web/properties:waltz-local-config/src/main/resources:waltz-web/target/classes:./waltz-web/target/waltz-web-jar-with-dependencies.jar -Dwaltz.port=8080 -Dappmap.recording.requests=false -Dappmap.disableLogFile=true org.finos.waltz.web.Main
+java -javaagent:$HOME/.appmap/lib/java/appmap.jar -cp waltz-web/properties:waltz-local-config/src/main/resources:waltz-web/target/classes:./waltz-web/target/waltz-web-jar-with-dependencies.jar -Dwaltz.port=8080 -Dappmap.recording.requests=false -Dappmap.disableLogFile=true -Dappmap.record.private=true org.finos.waltz.web.Main
 
 # Open waltz (admin/password)
 # NOTE: Can take 5-10 seconds to respond via web

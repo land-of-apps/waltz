@@ -8,6 +8,5 @@ packages:
 - path: "org.finos.waltz.schema"
 - path: "org.finos.waltz.service"
 - path: "org.finos.waltz.web"
-- path: "org.finos.waltz"
 - path: "spark.template.freemarker"
 - path: "static"
