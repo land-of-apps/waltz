@@ -37,7 +37,6 @@ Getting started
 - Embedded Jetty or WAR file (tested on Tomcat 7/8)
 - Spark framework
 - JDBC via JOOQ
-
 See [pom.xml](https://github.com/finos/waltz/blob/master/pom.xml) for a full list of Java dependencies.
 
 
