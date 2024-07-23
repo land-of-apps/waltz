@@ -5,6 +5,8 @@
 # start postgres
 docker-compose up -d postgres
 # Get db dump https://github.com/finos/waltz/blob/master/waltz-sample-data/database/pg/versions/postgres-dump-1.47.1.sql.gz
+
+psql -p 5432 -U waltz -h localhost -d waltz -c "CREATE EXTENSION IF NOT EXISTS pgcrypto;"
 pg_restore -p 5432 -U waltz -h localhost -d waltz < ~/Downloads/postgres-dump-1.47.1.sql.gz
 # bring schema up to date
 mvn -s .build.settings.xml compile -P waltz-postgres,dev-postgres -f waltz-schema/pom.xml -DskipTests=true
