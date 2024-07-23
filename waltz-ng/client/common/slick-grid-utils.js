@@ -3,6 +3,8 @@ import EntityLink from "./svelte/EntityLink.svelte";
 import {applicationKind} from "./services/enums/application-kind";
 import {lifecyclePhase} from "./services/enums/lifecycle-phase";
 import _ from "lodash";
+import {toLocalDate} from "./date-utils";
+import EntityLabel from "./svelte/EntityLabel.svelte";
 
 
 export function mkSortFn(sortCol, sortAsc = true) {
@@ -31,10 +33,54 @@ export function mkEntityLinkFormatter(valueProvider, showIcon = true) {
 }
 
 
+export function mkEntityLabelFormatter(valueProvider, showIcon = true, nullText = '') {
+    return (row, cell, value, colDef, dataCtx) => {
+
+        const ref = valueProvider
+            ? valueProvider(value, dataCtx)
+            : value;
+
+        if (_.isNil(ref)) {
+            return nullText;
+        } else {
+            const me = document.createElement("span");
+            const component = new EntityLabel({target: me});
+
+            component.$set({ref, showIcon});
+            return me;
+        }
+    }
+}
+
+
 export function mkExternalIdFormatter(valueProvider = d => d.externalId) {
     return (row, cell, value, colDef, dataCtx) => {
         const extId = valueProvider(value, dataCtx);
         return `<span>${extId}</span>`;
+    }
+}
+
+
+export function mkNameFormatter(valueProvider = d => d.name) {
+    return (row, cell, value, colDef, dataCtx) => {
+        const name = valueProvider(value, dataCtx);
+        return `<span>${name}</span>`;
+    }
+}
+
+export function mkReadOnlyFormatter(valueProvider = d => d.isReadonly) {
+    return (row, cell, value, colDef, dataCtx) => {
+        const isReadonly = valueProvider(value, dataCtx);
+        if (isReadonly) {
+            return `<span class="text-muted" style="padding-right: 2px"><i class="small fa fa-fw fa-lock"></i></span>`;
+        }
+    }
+}
+
+export function mkLastUpdatedFormatter(dateProvider = d => d.lastUpdatedAt) {
+    return (row, cell, value, colDef, dataCtx) => {
+        const lastUpdatedAt = dateProvider(dataCtx);
+        return `<span>${toLocalDate(lastUpdatedAt)}</span>`;
     }
 }
 

@@ -41,6 +41,10 @@
             path: ctx => `change-initiative/${ctx.id}`,
             title: "Change Initiative View"
         },
+        "main.data-type.list" : {
+            path: ctx => `data-types`,
+            title: "DataTypes"
+        },
         "main.data-type.view": {
             path: ctx => `data-types/${ctx.id}`,
             title: "DataType View"
@@ -48,6 +52,10 @@
         "main.flow-diagram.view": {
             path: ctx => `flow-diagram/${ctx.id}`,
             title: "Flow Diagram View"
+        },
+        "main.end-user-application.view": {
+            path: ctx => `end-user-application/id/${ctx.id}`,
+            title: "End User Application View"
         },
         "main.flow-classification-rule.view": {
             path: ctx => `flow-classification-rule/${ctx.id}`,
@@ -116,6 +124,10 @@
         "main.involvement-kind.view": {
             path: ctx => `involvement-kind/${ctx.id}`,
             title: "Involvement Kind View"
+        },
+        "main.survey.template.list": {
+            path: () => `survey/template/list`,
+            title: "Survey Templates"
         }
     };
 

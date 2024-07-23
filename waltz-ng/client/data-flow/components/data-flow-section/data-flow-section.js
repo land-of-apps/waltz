@@ -29,6 +29,9 @@ import FlowClassificationLegend
 import LogicalFlowScrollPanel from "../svelte/FlowDecoratorExplorerPanel.svelte"
 import {lastViewedFlowTabKey} from "../../../user";
 import FlowDetailPanel from "../svelte/flow-detail-tab/FlowDetailPanel.svelte"
+import FlowClassificationRulesPanel
+    from "../../../flow-classification-rule/components/summary-list/FlowClassificationRulesPanel.svelte";
+import {flowDirection} from "../../../common/services/enums/flow-direction";
 
 const bindings = {
     parentEntityRef: "<",
@@ -52,6 +55,7 @@ const initialState = {
     FlowDetailPanel,
     FlowClassificationLegend,
     LogicalFlowScrollPanel,
+    FlowClassificationRulesPanel,
     activeTab: null,
     changeUnits: [],
     dataTypeUsages: [],
@@ -68,6 +72,7 @@ const initialState = {
             bulkLogicalFlows: false,
             bulkPhysicalFlows: false
         },
+        ratingDirection: flowDirection.OUTBOUND.key
     },
     tabs,
     activeMode: modes.VIEW,
@@ -183,6 +188,14 @@ function controller(serviceBroker) {
 
     vm.bulkLoad = () => {
         vm.activeMode = modes.BULK;
+    }
+
+    vm.onToggleRatingDirection = () => {
+        if(vm.visibility.ratingDirection === flowDirection.OUTBOUND.key) {
+            vm.visibility.ratingDirection = flowDirection.INBOUND.key;
+        } else {
+            vm.visibility.ratingDirection = flowDirection.OUTBOUND.key;
+        }
     }
 
 }

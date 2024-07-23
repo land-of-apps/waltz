@@ -3,20 +3,24 @@ package org.finos.waltz.service.measurable_rating;
 import org.finos.waltz.data.GenericSelector;
 import org.finos.waltz.data.GenericSelectorFactory;
 import org.finos.waltz.data.measurable.MeasurableDao;
+import org.finos.waltz.data.measurable_rating.MeasurableRatingIdSelectorFactory;
 import org.finos.waltz.data.rating_scheme.RatingSchemeDAO;
 import org.finos.waltz.model.EntityKind;
 import org.finos.waltz.model.IdSelectionOptions;
 import org.finos.waltz.model.allocation.Allocation;
 import org.finos.waltz.model.allocation_scheme.AllocationScheme;
-import org.finos.waltz.model.application.Application;
+import org.finos.waltz.model.application.AssessmentsView;
 import org.finos.waltz.model.application.ImmutableAssessmentsView;
 import org.finos.waltz.model.application.ImmutableMeasurableRatingsView;
+import org.finos.waltz.model.application.MeasurableRatingsView;
 import org.finos.waltz.model.assessment_definition.AssessmentDefinition;
 import org.finos.waltz.model.assessment_definition.AssessmentVisibility;
 import org.finos.waltz.model.assessment_rating.AssessmentRating;
 import org.finos.waltz.model.measurable.Measurable;
 import org.finos.waltz.model.measurable.MeasurableHierarchy;
 import org.finos.waltz.model.measurable_category.MeasurableCategory;
+import org.finos.waltz.model.measurable_rating.AllocationsView;
+import org.finos.waltz.model.measurable_rating.DecommissionsView;
 import org.finos.waltz.model.measurable_rating.ImmutableAllocationsView;
 import org.finos.waltz.model.measurable_rating.ImmutableDecommissionsView;
 import org.finos.waltz.model.measurable_rating.ImmutableMeasurableRatingCategoryView;
@@ -39,6 +43,7 @@ import org.finos.waltz.service.measurable_rating_planned_decommission.Measurable
 import org.finos.waltz.service.measurable_rating_replacement.MeasurableRatingReplacementService;
 import org.finos.waltz.service.rating_scheme.RatingSchemeService;
 import org.jooq.Record1;
+import org.jooq.Select;
 import org.jooq.SelectConditionStep;
 import org.jooq.impl.DSL;
 import org.springframework.stereotype.Service;
@@ -52,7 +57,7 @@ import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
-import static org.finos.waltz.common.CollectionUtilities.find;
+import static org.finos.waltz.common.FunctionUtilities.time;
 import static org.finos.waltz.common.MapUtilities.indexBy;
 import static org.finos.waltz.common.SetUtilities.asSet;
 import static org.finos.waltz.common.SetUtilities.filter;
@@ -62,6 +67,9 @@ import static org.finos.waltz.schema.Tables.MEASURABLE;
 
 @Service
 public class MeasurableRatingViewService {
+
+    private static final MeasurableRatingIdSelectorFactory MEASURABLE_RATING_ID_SELECTOR_FACTORY = new MeasurableRatingIdSelectorFactory();
+    private static final GenericSelectorFactory GENERIC_SELECTOR_FACTORY = new GenericSelectorFactory();
 
     private final MeasurableRatingService measurableRatingService;
     private final MeasurableService measurableService;
@@ -79,7 +87,6 @@ public class MeasurableRatingViewService {
     private final AllocationSchemeService allocationSchemeService;
     private final ApplicationService applicationService;
 
-    private final GenericSelectorFactory GENERIC_SELECTOR_FACTORY = new GenericSelectorFactory();
 
 
     public MeasurableRatingViewService(MeasurableRatingService measurableRatingService,
@@ -117,19 +124,21 @@ public class MeasurableRatingViewService {
         MeasurableRating measurableRating = measurableRatingService.getById(id);
 
         Measurable measurable = measurableService.getById(measurableRating.measurableId());
-        Application application = applicationService.getById(measurableRating.entityReference().id());
 
         if (measurable == null) {
 
-            return ImmutableMeasurableRatingView.builder()
+            return ImmutableMeasurableRatingView
+                    .builder()
                     .measurableRating(measurableRating)
-                    .application(application)
                     .measurable(null)
                     .rating(null)
                     .decommission(null)
                     .replacements(emptyList())
+                    .category(null)
                     .build();
         } else {
+
+            MeasurableCategory category = measurableCategoryService.getById(measurable.categoryId());
 
             List<RatingSchemeItem> ratingSchemeItems = ratingSchemeService.findRatingSchemeItemsForEntityAndCategory(
                     measurableRating.entityReference(),
@@ -150,13 +159,13 @@ public class MeasurableRatingViewService {
 
             return ImmutableMeasurableRatingView.builder()
                     .measurableRating(measurableRating)
-                    .application(application)
                     .measurable(measurable)
                     .rating(rating)
                     .decommission(decomm)
                     .replacements(replacementApps)
                     .allocations(allocations)
                     .allocationSchemes(schemes)
+                    .category(category)
                     .build();
         }
 
@@ -165,18 +174,19 @@ public class MeasurableRatingViewService {
     public MeasurableRatingCategoryView getViewForCategoryAndSelector(IdSelectionOptions idSelectionOptions,
                                                                       long categoryId) {
 
-        GenericSelector appSelector = GENERIC_SELECTOR_FACTORY.applyForKind(EntityKind.APPLICATION, idSelectionOptions);
 
-        List<Application> applications = applicationService.findByAppIdSelector(idSelectionOptions);
-        Collection<MeasurableCategory> allCategories = measurableCategoryService.findAll();
+        Select<Record1<Long>> ratingIdSelector = MEASURABLE_RATING_ID_SELECTOR_FACTORY.apply(idSelectionOptions);
 
-        MeasurableCategory category = find(allCategories, d -> d.id().get() == categoryId)
-                .orElseThrow(() -> new IllegalArgumentException(format("Cannot find category with id: %s", categoryId)));
+        MeasurableCategory category = measurableCategoryService.getById(categoryId);
 
-        List<MeasurableRating> ratings = measurableRatingService.findForCategoryAndSelector(appSelector.selector(), categoryId);
-        List<Measurable> measurables = measurableService.findByCategoryId(categoryId);
-        List<AllocationScheme> allocSchemes = allocationSchemeService.findByCategoryId(categoryId);
-        Collection<Allocation> allocs = allocationService.findForCategoryAndSelector(appSelector.selector(), categoryId);
+        if(category == null) {
+            throw new IllegalArgumentException(format("Cannot find category with id: %s", categoryId));
+        }
+
+        List<MeasurableRating> ratings = time("rating", () -> measurableRatingService.findForCategoryAndMeasurableRatingIdSelector(ratingIdSelector, categoryId));
+        List<Measurable> measurables = time("measurables", () -> measurableService.findByCategoryId(categoryId));
+        List<AllocationScheme> allocSchemes = time("allocSch", () -> allocationSchemeService.findByCategoryId(categoryId));
+        Collection<Allocation> allocs = time("allocs", () -> allocationService.findForCategoryAndMeasurableRatingIdSelector(ratingIdSelector, categoryId));
 
         Set<AssessmentDefinition> defs = filter(
                 assessmentDefinitionService.findByEntityKind(EntityKind.MEASURABLE_RATING),
@@ -185,33 +195,22 @@ public class MeasurableRatingViewService {
                         .map(qualifierRef -> qualifierRef.id() == categoryId)
                         .orElse(false));
 
-        List<AssessmentRating> assessments = assessmentRatingService.findByEntityKind(EntityKind.MEASURABLE_RATING);
-        Set<RatingSchemeItem> assessmentRatingSchemeItems = ratingSchemeDAO.findRatingSchemeItemsByIds(map(assessments, AssessmentRating::ratingId));
-        Set<RatingSchemeItem> measurableRatingSchemeItems = ratingSchemeDAO.findRatingSchemeItemsForSchemeIds(asSet(category.ratingSchemeId()));
-        Collection<MeasurableRatingPlannedDecommission> decomms = measurableRatingPlannedDecommissionService.findForCategoryAndSelector(appSelector.selector(), categoryId);
-        Collection<MeasurableRatingReplacement> replacements = measurableRatingReplacementService.findForCategoryAndSelector(appSelector.selector(), categoryId);
-        Collection<MeasurableRatingPlannedDecommissionInfo> replacingDecomms = measurableRatingPlannedDecommissionService.findForReplacingEntitySelectorAndCategory(appSelector.selector(), categoryId);
+        List<AssessmentRating> assessments = time("assessments", () -> assessmentRatingService.findByEntityKind(EntityKind.MEASURABLE_RATING));
+        Set<RatingSchemeItem> assessmentRatingSchemeItems = time("arsi", () -> ratingSchemeDAO.findRatingSchemeItemsByIds(map(assessments, AssessmentRating::ratingId)));
+        Set<RatingSchemeItem> measurableRatingSchemeItems = time("mrsi", () -> ratingSchemeDAO.findRatingSchemeItemsForSchemeIds(asSet(category.ratingSchemeId())));
+        Collection<MeasurableRatingPlannedDecommission> decomms = time("decom", () -> measurableRatingPlannedDecommissionService.findForCategoryAndMeasurableRatingIdSelector(ratingIdSelector, categoryId));
+        Collection<MeasurableRatingReplacement> replacements = time("replace", () -> measurableRatingReplacementService.findForCategoryAndMeasurableRatingIdSelector(ratingIdSelector, categoryId));
+
+        GenericSelector replacementSubjectIdSelector = GENERIC_SELECTOR_FACTORY.apply(idSelectionOptions);
+
+        Collection<MeasurableRatingPlannedDecommissionInfo> replacingDecomms = time("replacing", () -> measurableRatingPlannedDecommissionService.findForReplacingSubjectIdSelectorAndCategory(replacementSubjectIdSelector, categoryId));
         Set<AssessmentRating> assessmentRatings = filter(assessments, d -> toIds(defs).contains(d.assessmentDefinitionId()));
 
-        Set<MeasurableHierarchy> hierarchyForCategory = measurableService.findHierarchyForCategory(categoryId);
+        Set<MeasurableHierarchy> hierarchyForCategory = time("hier", () -> measurableService.findHierarchyForCategory(categoryId));
 
-        Set<MeasurableCategory> primaryCategories = allCategories
-                .stream()
-                .filter(MeasurableCategory::allowPrimaryRatings)
-                .collect(Collectors.toSet());
+        MeasurableRatingsView primaryRatingsView = time("prim", () -> getPrimaryRatingsViewForMeasurableIdSelector(ratingIdSelector));
 
-        Set<MeasurableRating> primaryMeasurableRatings = measurableRatingService.findPrimaryRatingsForGenericSelector(appSelector);
-        List<Measurable> primaryMeasurables = measurableDao.findByMeasurableIdSelector(mkMeasurableIdSelector(primaryMeasurableRatings));
-        Set<RatingSchemeItem> primaryRatingSchemeItems = ratingSchemeDAO.findRatingSchemeItemsForSchemeIds(map(primaryCategories, MeasurableCategory::ratingSchemeId));
-
-        ImmutableMeasurableRatingsView primaryRatingsView = ImmutableMeasurableRatingsView.builder()
-                .measurableRatings(primaryMeasurableRatings)
-                .measurables(primaryMeasurables)
-                .measurableCategories(primaryCategories)
-                .ratingSchemeItems(primaryRatingSchemeItems)
-                .build();
-
-        ImmutableMeasurableRatingsView ratingsView = ImmutableMeasurableRatingsView
+        MeasurableRatingsView ratingsView = ImmutableMeasurableRatingsView
                 .builder()
                 .measurableRatings(ratings)
                 .measurables(measurables)
@@ -220,20 +219,20 @@ public class MeasurableRatingViewService {
                 .ratingSchemeItems(measurableRatingSchemeItems)
                 .build();
 
-        ImmutableAssessmentsView assessmentsView = ImmutableAssessmentsView
+        AssessmentsView assessmentsView = ImmutableAssessmentsView
                 .builder()
                 .assessmentRatings(assessmentRatings)
                 .assessmentDefinitions(defs)
                 .ratingSchemeItems(assessmentRatingSchemeItems)
                 .build();
 
-        ImmutableAllocationsView allocationsView = ImmutableAllocationsView
+        AllocationsView allocationsView = ImmutableAllocationsView
                 .builder()
                 .allocations(allocs)
                 .allocationSchemes(allocSchemes)
                 .build();
 
-        ImmutableDecommissionsView decommissionView = ImmutableDecommissionsView
+        DecommissionsView decommissionView = ImmutableDecommissionsView
                 .builder()
                 .plannedDecommissions(decomms)
                 .plannedReplacements(replacements)
@@ -241,7 +240,6 @@ public class MeasurableRatingViewService {
                 .build();
 
         return ImmutableMeasurableRatingCategoryView.builder()
-                .applications(applications)
                 .measurableRatings(ratingsView)
                 .allocations(allocationsView)
                 .primaryAssessments(assessmentsView)
@@ -250,6 +248,50 @@ public class MeasurableRatingViewService {
                 .build();
     }
 
+
+    /*
+     * Should move to using a measurable rating id selector
+     */
+    @Deprecated
+    private MeasurableRatingsView getPrimaryRatingsView(GenericSelector subjectIdSelector) {
+
+        Set<MeasurableCategory> primaryCategories = measurableCategoryService.findAll()
+                .stream()
+                .filter(MeasurableCategory::allowPrimaryRatings)
+                .collect(Collectors.toSet());
+
+        Set<MeasurableRating> primaryMeasurableRatings = measurableRatingService.findPrimaryRatingsForGenericSelector(subjectIdSelector);
+        List<Measurable> primaryMeasurables = measurableDao.findByMeasurableIdSelector(mkMeasurableIdSelector(primaryMeasurableRatings));
+        Set<RatingSchemeItem> primaryRatingSchemeItems = ratingSchemeDAO.findRatingSchemeItemsForSchemeIds(map(primaryCategories, MeasurableCategory::ratingSchemeId));
+
+        return ImmutableMeasurableRatingsView.builder()
+                .measurableRatings(primaryMeasurableRatings)
+                .measurables(primaryMeasurables)
+                .measurableCategories(primaryCategories)
+                .ratingSchemeItems(primaryRatingSchemeItems)
+                .build();
+    }
+
+    private MeasurableRatingsView getPrimaryRatingsViewForMeasurableIdSelector(Select<Record1<Long>> ratingIdSelector) {
+
+        Set<MeasurableCategory> primaryCategories = measurableCategoryService.findAll()
+                .stream()
+                .filter(MeasurableCategory::allowPrimaryRatings)
+                .collect(Collectors.toSet());
+
+        Set<MeasurableRating> primaryMeasurableRatings = measurableRatingService.findPrimaryRatingsForMeasurableIdSelector(ratingIdSelector);
+        List<Measurable> primaryMeasurables = measurableDao.findByMeasurableIdSelector(mkMeasurableIdSelector(primaryMeasurableRatings));
+        Set<RatingSchemeItem> primaryRatingSchemeItems = ratingSchemeDAO.findRatingSchemeItemsForSchemeIds(map(primaryCategories, MeasurableCategory::ratingSchemeId));
+
+        return ImmutableMeasurableRatingsView.builder()
+                .measurableRatings(primaryMeasurableRatings)
+                .measurables(primaryMeasurables)
+                .measurableCategories(primaryCategories)
+                .ratingSchemeItems(primaryRatingSchemeItems)
+                .build();
+    }
+
+
     private SelectConditionStep<Record1<Long>> mkMeasurableIdSelector(Set<MeasurableRating> primaryMeasurableRatings) {
         return DSL
                 .select(MEASURABLE.ID)
@@ -257,5 +299,12 @@ public class MeasurableRatingViewService {
                 .where(MEASURABLE.ID.in(map(
                         primaryMeasurableRatings,
                         MeasurableRating::measurableId)));
+    }
+
+
+    public MeasurableRatingsView getPrimaryRatingsView(IdSelectionOptions idSelectionOptions) {
+        GenericSelectorFactory selectorFactory = new GenericSelectorFactory();
+        GenericSelector genericSelector = selectorFactory.apply(idSelectionOptions);
+        return getPrimaryRatingsView(genericSelector);
     }
 }

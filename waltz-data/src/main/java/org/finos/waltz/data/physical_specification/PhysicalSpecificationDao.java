@@ -176,6 +176,12 @@ public class PhysicalSpecificationDao {
     }
 
 
+    public Collection<PhysicalSpecification> findByExternalId(String externalId) {
+        return basicSelectByCondition(PHYSICAL_SPECIFICATION.EXTERNAL_ID.eq(externalId))
+                .fetchSet(TO_DOMAIN_MAPPER);
+    }
+
+
     public PhysicalSpecification getByParsedFlow(PhysicalFlowParsed flow) {
 
         Condition condition = PHYSICAL_SPECIFICATION.NAME.eq(flow.name())
@@ -214,7 +220,6 @@ public class PhysicalSpecificationDao {
         record.setOwningEntityId(specification.owningEntity().id());
 
         record.setName(specification.name());
-        record.setExternalId(specification.externalId().orElse(""));
         record.setDescription(specification.description());
         record.setFormat(specification.format().value());
         record.setLastUpdatedAt(Timestamp.valueOf(specification.lastUpdatedAt()));
@@ -225,6 +230,8 @@ public class PhysicalSpecificationDao {
         record.setCreatedAt(specification.created().get().atTimestamp());
         record.setCreatedBy(specification.created().get().by());
         record.setIsReadonly(specification.isReadOnly());
+
+        specification.externalId().ifPresent(record::setExternalId);
 
         record.store();
         return record.getId();
@@ -440,4 +447,5 @@ public class PhysicalSpecificationDao {
             return operationsForEntity;
         }
     }
+
 }

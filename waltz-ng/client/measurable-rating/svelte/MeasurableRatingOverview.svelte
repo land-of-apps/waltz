@@ -12,6 +12,7 @@
     import _ from "lodash";
     import Icon from "../../common/svelte/Icon.svelte";
     import DescriptionFade from "../../common/svelte/DescriptionFade.svelte";
+    import {primaryEntityReference as primaryRef} from "../../assessments/components/rating-editor/rating-store";
 
     export let primaryEntityReference;
 
@@ -26,6 +27,8 @@
     $: view = $measurableRatingCall?.data;
     $: allocations = view?.allocations || [];
     $: allocationsBySchemeId = _.keyBy(view?.allocations, d => d.schemeId);
+    $: $primaryRef = primaryEntityReference;
+    $: subject = view?.measurableRating.entityReference;
 </script>
 
 
@@ -36,7 +39,7 @@
             <li><ViewLink state="main">Home</ViewLink></li>
             <li>Measurable Rating</li>
             {#if view}
-                <li><EntityLink ref={view?.application}/></li>
+                <li><EntityLink ref={subject}/></li>
                 <li><EntityLink ref={view?.measurable}/></li>
             {/if}
         </ol>
@@ -52,11 +55,23 @@
                     Entity
                 </div>
                 <div class="col-sm-8">
-                    <EntityLink ref={view?.application}/>
+                    <EntityLink ref={subject}/>
                     <div class="help-block">
-                        <DescriptionFade text={view?.application.description}
+                        <DescriptionFade text={subject?.description}
                                          expanderAlignment="right"/>
                     </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-4 waltz-display-field-label">
+                    Category
+                </div>
+                <div class="col-sm-8">
+                    {#if view?.category}
+                        <Icon name={view?.category.icon}/> {view?.category.name}
+                    {:else}
+                        Unknown
+                    {/if}
                 </div>
             </div>
             <div class="row">

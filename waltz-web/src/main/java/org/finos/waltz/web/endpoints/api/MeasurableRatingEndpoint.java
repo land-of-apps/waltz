@@ -24,6 +24,7 @@ import org.finos.waltz.model.EntityReference;
 import org.finos.waltz.model.IdSelectionOptions;
 import org.finos.waltz.model.Operation;
 import org.finos.waltz.model.UserTimestamp;
+import org.finos.waltz.model.application.MeasurableRatingsView;
 import org.finos.waltz.model.measurable_rating.ImmutableRemoveMeasurableRatingCommand;
 import org.finos.waltz.model.measurable_rating.MeasurableRating;
 import org.finos.waltz.model.measurable_rating.MeasurableRatingCategoryView;
@@ -104,6 +105,7 @@ public class MeasurableRatingEndpoint implements Endpoint {
         String getViewByIdPath = mkPath(BASE_URL, "id", ":id", "view");
         String findForEntityPath = mkPath(BASE_URL, "entity", ":kind", ":id");
         String getViewForCategoryAndAppSelectorPath = mkPath(BASE_URL, "category", ":id", "view");
+        String getPrimaryRatingsViewForAppSelectorPath = mkPath(BASE_URL, "primary-ratings", "view");
         String modifyMeasurableForEntityPath = mkPath(BASE_URL, "entity", ":kind", ":id", "measurable", ":measurableId");
         String modifyCategoryForEntityPath = mkPath(BASE_URL, "entity", ":kind", ":id", "category", ":categoryId");
         String findByMeasurableSelectorPath = mkPath(BASE_URL, "measurable-selector");
@@ -111,7 +113,7 @@ public class MeasurableRatingEndpoint implements Endpoint {
         String findByCategoryPath = mkPath(BASE_URL, "category", ":id");
         String countByMeasurableCategoryPath = mkPath(BASE_URL, "count-by", "measurable", "category", ":id");
         String statsByAppSelectorPath = mkPath(BASE_URL, "stats-by", "app-selector");
-        String hasImplicitlyRelatedMeasurablesPath = mkPath(BASE_URL, "implicitly-related-measurables", ":measurableId");
+        String hasMeasurableRatingsPath = mkPath(BASE_URL, "has-measurable-ratings");
 
         String saveRatingItemPath = mkPath(BASE_URL, "entity", ":kind", ":id", "measurable", ":measurableId", "rating");
         String saveRatingDescriptionPath = mkPath(BASE_URL, "entity", ":kind", ":id", "measurable", ":measurableId", "description");
@@ -138,6 +140,11 @@ public class MeasurableRatingEndpoint implements Endpoint {
             return time("viewForCatAndSelector", () -> measurableRatingViewService.getViewForCategoryAndSelector(idSelectionOptions, categoryId));
         };
 
+        DatumRoute<MeasurableRatingsView> getPrimaryRatingsViewForAppSelectorRoute = (request, response) -> {
+            IdSelectionOptions idSelectionOptions = readIdSelectionOptionsFromBody(request);
+            return measurableRatingViewService.getPrimaryRatingsView(idSelectionOptions);
+        };
+
         ListRoute<MeasurableRating> findByCategoryRoute = (request, response)
                 -> measurableRatingService.findByCategory(getId(request));
 
@@ -147,10 +154,8 @@ public class MeasurableRatingEndpoint implements Endpoint {
         ListRoute<MeasurableRatingTally> statsByAppSelectorRoute = (request, response)
                 -> measurableRatingService.statsByAppSelector(readBody(request, MeasurableRatingStatParams.class));
 
-        DatumRoute<Boolean> hasImplicitlyRelatedMeasurablesRoute = (request, response)
-                -> measurableRatingService.hasImplicitlyRelatedMeasurables(
-                getLong(request, "measurableId"),
-                readIdSelectionOptionsFromBody(request));
+        DatumRoute<Boolean> hasMeasurableRatingsRoute = (request, response)
+                -> measurableRatingService.hasMeasurableRatings(readIdSelectionOptionsFromBody(request));
 
         getForDatum(getByIdPath, getByIdRoute);
         getForDatum(getViewByIdPath, getViewByIdRoute);
@@ -161,13 +166,14 @@ public class MeasurableRatingEndpoint implements Endpoint {
         deleteForList(modifyMeasurableForEntityPath, this::removeRoute);
         deleteForList(modifyCategoryForEntityPath, this::removeCategoryRoute);
         getForList(countByMeasurableCategoryPath, countByMeasurableCategoryRoute);
-        postForDatum(hasImplicitlyRelatedMeasurablesPath, hasImplicitlyRelatedMeasurablesRoute);
+        postForDatum(hasMeasurableRatingsPath, hasMeasurableRatingsRoute);
         postForList(statsByAppSelectorPath, statsByAppSelectorRoute);
 
         postForList(saveRatingItemPath, this::saveRatingItemRoute);
         postForList(saveRatingDescriptionPath, this::saveRatingDescriptionRoute);
         postForList(saveRatingIsPrimaryPath, this::saveRatingIsPrimaryRoute);
         postForDatum(getViewForCategoryAndAppSelectorPath, getViewByCategoryAndAppSelectorRoute);
+        postForDatum(getPrimaryRatingsViewForAppSelectorPath, getPrimaryRatingsViewForAppSelectorRoute);
     }
 
 

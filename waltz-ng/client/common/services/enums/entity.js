@@ -166,7 +166,7 @@ export const entity = {
     },
     END_USER_APPLICATION: {
         key: "END_USER_APPLICATION",
-        name: "End User App",
+        name: "End User Application",
         icon: "table",
         description: null,
         position: 1200
@@ -219,6 +219,13 @@ export const entity = {
         icon: "share-alt-square",
         description: null,
         position: 1500
+    },
+    INVOLVEMENT_GROUP: {
+        key: "INVOLVEMENT_GROUP",
+        name: "Involvement Group",
+        icon: "people-group",
+        description: null,
+        position: 1510
     },
     INVOLVEMENT_KIND: {
         key: "INVOLVEMENT_KIND",
@@ -318,6 +325,13 @@ export const entity = {
         description: null,
         position: 1960
     },
+    PERMISSION_GROUP: {
+        key: "PERMISSION_GROUP",
+        name: "Permission Group",
+        icon: "layer-group",
+        description: null,
+        position: 1970
+    },
     PERSON: {
         key: "PERSON",
         name: "Person",
@@ -342,7 +356,7 @@ export const entity = {
     PHYSICAL_FLOW: {
         key: "PHYSICAL_FLOW",
         name: "Physical Flow",
-        icon: "qrcode",
+        icon: "arrows-turn-to-dots",
         description: null,
         position: 2200
     },

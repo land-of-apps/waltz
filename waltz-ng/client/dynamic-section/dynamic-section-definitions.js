@@ -16,6 +16,7 @@
  *
  */
 import BookmarkPanel from "../bookmarks/svelte/BookmarkPanel.svelte";
+import InvolvementsSection from "../involvement-kind/components/svelte/InvolvementsSection.svelte";
 
 
 const appsSection = {
@@ -116,10 +117,10 @@ const logicalFlowsTabgroupSection = {
 };
 
 const measurableRatingAppSection = {
-    componentId: "measurable-rating-app-section",
+    componentId: "measurable-rating-entity-section",
     name: "Ratings / Roadmaps",
     icon: "puzzle-piece",
-    description: "Viewpoints linked to this application with a rating",
+    description: "Viewpoints linked to this entity with a rating",
     id: 15,
 };
 
@@ -462,6 +463,15 @@ const dataTypeDecoratorSection = {
     id: 10040,
 };
 
+const involvementsSection = {
+    svelteComponent: InvolvementsSection,
+    componentId: "involvements-section",
+    name: "Involvements",
+    icon: "users",
+    description: "Involvements for this involvement kind",
+    id: 10050,
+};
+
 
 export const dynamicSections = {
     appCostsSection,
@@ -490,6 +500,7 @@ export const dynamicSections = {
     entityStatisticSummarySection,
     flowSpecDefinitionSection,
     involvedPeopleSection,
+    involvementsSection,
     legalEntitySection,
     legalEntityRelationshipKindSection,
     licenceSection,
@@ -753,6 +764,15 @@ const flowDiagramSections = [
     changeLogSection
 ];
 
+
+const involvementKindSections = [
+    assessmentRatingSection,
+    bookmarksSection,
+    entityNamedNotesSection,
+    involvementsSection,
+    changeLogSection
+];
+
 const processDiagramSections = [
     pack(appsSection,
          [
@@ -879,6 +899,17 @@ const legalEntityRelationshipSections = [
     changeLogSection
 ];
 
+const endUserApplicationSections = [
+    assessmentRatingSection,
+    bookmarksSection,
+    entityNamedNotesSection,
+    involvedPeopleSection,
+    dataFlowSection,
+    entityDiagramsSection,
+    measurableRatingAppSection,
+    changeLogSection
+];
+
 
 export const dynamicSectionsByKind = {
     "main.actor.view": actorSections,
@@ -896,8 +927,10 @@ export const dynamicSectionsByKind = {
     "main.database.external-id": databaseSections,
     "main.database.view": databaseSections,
     "main.entity-relationship.view": entityRelationshipSections,
+    "main.end-user-application.view": endUserApplicationSections,
     "main.flow-classification-rule.view": flowClassificationRuleSections,
     "main.flow-diagram.view": flowDiagramSections,
+    "main.involvement-kind.view": involvementKindSections,
     "main.legal-entity.view": legalEntitySections,
     "main.legal-entity-relationship.view": legalEntityRelationshipSections,
     "main.legal-entity-relationship-kind.view": legalEntityRelationshipKindSections,

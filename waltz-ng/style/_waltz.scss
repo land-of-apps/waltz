@@ -224,6 +224,7 @@ textarea {
 .waltz-display-field-label {
     color: #705f53;
     overflow: hidden;
+    padding-bottom: 0.2em;
 }
 
 .waltz-display-field-value {
@@ -465,4 +466,9 @@ details {
 details summary {
     cursor: pointer;
     display: list-item;
+}
+
+
+.waltz-search-input {
+    width: 100%;
 }

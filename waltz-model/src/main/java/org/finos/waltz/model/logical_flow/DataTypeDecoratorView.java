@@ -20,11 +20,10 @@ package org.finos.waltz.model.logical_flow;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import org.finos.waltz.model.assessment_definition.AssessmentDefinition;
-import org.finos.waltz.model.assessment_rating.AssessmentRating;
+import org.finos.waltz.model.application.AssessmentsView;
+import org.finos.waltz.model.datatype.DataType;
 import org.finos.waltz.model.datatype.DataTypeDecorator;
-import org.finos.waltz.model.flow_classification_rule.FlowClassificationRule;
-import org.finos.waltz.model.rating.RatingSchemeItem;
+import org.finos.waltz.model.flow_classification.FlowClassification;
 import org.immutables.value.Value;
 
 import java.util.Set;
@@ -33,15 +32,11 @@ import java.util.Set;
 @Value.Immutable
 @JsonSerialize(as = ImmutableDataTypeDecoratorView.class)
 @JsonDeserialize(as = ImmutableDataTypeDecoratorView.class)
-public abstract class DataTypeDecoratorView {
-
-    public abstract Set<DataTypeDecorator> dataTypeDecorators();
-    public abstract Set<AssessmentRating> decoratorRatings();
-
-    public abstract Set<AssessmentDefinition> primaryAssessmentDefinitions();
-
-    public abstract Set<RatingSchemeItem> ratingSchemeItems();
-
-    public abstract Set<FlowClassificationRule> flowClassificationRules();
+public interface DataTypeDecoratorView {
+    Set<DataTypeDecorator> dataTypeDecorators();
+    Set<DataType> dataTypes();
+    Set<FlowClassification> classifications();
+    AssessmentsView primaryAssessments();
+    FlowClassificationRulesView flowClassificationRules();
 
 }

@@ -31,7 +31,7 @@
 
     <groupId>org.finos</groupId>
     <artifactId>waltz</artifactId>
-    <version>1.57-SNAPSHOT</version>
+    <version>1.62-SNAPSHOT</version>
     <modules>
         <module>waltz-common</module>
         <module>waltz-model</module>
@@ -41,6 +41,7 @@
         <module>waltz-data</module>
         <module>waltz-schema</module>
         <module>waltz-test-common</module>
+        <module>waltz-integration-test</module>
         <!--TODO: find a better way of passing a logback configuration file-->
         <!--<module>waltz-local-config</module>-->
     </modules>
@@ -107,7 +108,7 @@
 
         <timestamp>${maven.build.timestamp}</timestamp>
         <playwright.skip>true</playwright.skip>
-        <jetty.version>9.4.48.v20220622</jetty.version>
+        <jetty.version>9.4.55.v20240627</jetty.version>
     </properties>
 
 
@@ -499,12 +500,12 @@
         <profile>
             <id>dev-h2-inmem</id>
             <properties>
-                <!-- <database.url>jdbc:h2:tcp://localhost/mem:waltz;CASE_INSENSITIVE_IDENTIFIERS=TRUE</database.url>
+                <database.url>jdbc:h2:mem:waltz;CASE_INSENSITIVE_IDENTIFIERS=TRUE;DATABASE_TO_UPPER=TRUE</database.url>
                 <database.user>sa</database.user>
-                <database.password>sa</database.password> -->
-                <database.url>jdbc:h2:file:~/data/waltz/h2/waltzdb;DATABASE_TO_UPPER=false</database.url>
-                <database.user>root</database.user>
-                <database.password></database.password>
+                <database.password>sa</database.password>
+<!--                <database.url>jdbc:h2:file:~/data/waltz/h2/waltzdb;DATABASE_TO_UPPER=false</database.url>-->
+<!--                <database.user>root</database.user>-->
+<!--                <database.password></database.password>-->
                 <database.schema>PUBLIC</database.schema>
                 <database.catalog></database.catalog>
             </properties>

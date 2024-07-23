@@ -44,6 +44,17 @@
     let physicalFlows = [];
     let logicalFlows = [];
 
+    function determineIfAggregateView(ref) {
+        switch (ref.kind) {
+            case "APPLICATION":
+            case "END_USER_APPLICATION":
+            case "ACTOR":
+                return false;
+            default:
+                return true;
+        }
+    }
+
     onMount(() => {
         resetFlowDetailsStore();
         flowClassificationCall = flowClassificationStore.findAll();
@@ -87,31 +98,42 @@
     }
 
     $: {
-        if (parentEntityRef) {
+        if (parentEntityRef && ! flowViewCall) {
             selectionOptions = mkSelectionOptions(parentEntityRef);
             flowViewCall = logicalFlowStore.getViewForSelector(selectionOptions);
         }
     }
+
+    $: isAggregateView = parentEntityRef && determineIfAggregateView(parentEntityRef);
+
 </script>
 
 
 <div class="flow-detail-panel">
-    <div class="flow-detail-table">
-        <FlowDetailFilters {dataTypes}
-                           {assessmentFilters}
-                           {flowClassifications}
-                           {physicalFlows}/>
+    {#if $flowViewCall === null || $flowViewCall?.status === 'loading'}
+        <div>
+            <h3>Loading...</h3>
+            <div class="help-block">
+                This may take a few seconds on larger groups
+            </div>
+        </div>
+    {:else}
+        <div class="flow-detail-table">
+            <FlowDetailFilters {dataTypes}
+                               {assessmentFilters}
+                               {flowClassifications}
+                               {physicalFlows}
+                               {isAggregateView}/>
 
-        <LogicalFlowTable {logicalFlows}
-                          {flowClassifications}
-                          assessmentDefinitions={allAssessmentDefinitions}/>
-        <br>
-        <PhysicalFlowTable {physicalFlows}
-                           {flowClassifications}
-                           assessmentDefinitions={allAssessmentDefinitions}/>
+            <LogicalFlowTable {logicalFlows}
+                              {flowClassifications}
+                              assessmentDefinitions={allAssessmentDefinitions}/>
+            <br>
+            <PhysicalFlowTable {physicalFlows}
+                               assessmentDefinitions={allAssessmentDefinitions}/>
 
-        <div style="padding-top: 1em"
-             class="pull-right">
+            <div style="padding-top: 1em"
+                 class="pull-right">
             <span>
                 <DataExtractLink name="Export Logical Flow Details"
                                  filename="Logical Flows"
@@ -122,19 +144,21 @@
                 |
                 <DataExtractLink name="Export Physical Flow Details"
                                  filename="Physical Flows"
-                                 extractUrl={`physical-flows/all/${parentEntityRef.kind}/${parentEntityRef.id}`}
+                                 extractUrl="logical-flow-view/physical-flows"
                                  method="POST"
+                                 requestBody={selectionOptions}
                                  styling="link"/>
             </span>
-        </div>
+            </div>
 
-    </div>
-    {#if $selectedLogicalFlow || $selectedPhysicalFlow}
-        <div class="flow-detail-context-panel">
-            <SelectedFlowDetailPanel on:reload={onReload}
-                                     flowClassifications={flowClassifications}
-                                     assessmentDefinitions={allAssessmentDefinitions}/>
         </div>
+        {#if $selectedLogicalFlow || $selectedPhysicalFlow}
+            <div class="flow-detail-context-panel">
+                <SelectedFlowDetailPanel on:reload={onReload}
+                                         flowClassifications={flowClassifications}
+                                         assessmentDefinitions={allAssessmentDefinitions}/>
+            </div>
+        {/if}
     {/if}
 </div>
 

@@ -80,6 +80,7 @@ public class PhysicalFlowDao {
         PhysicalFlowRecord record = r.into(PHYSICAL_FLOW);
         return ImmutablePhysicalFlow.builder()
                 .id(record.getId())
+                .name(record.getName())
                 .provenance(record.getProvenance())
                 .specificationId(record.getSpecificationId())
                 .basisOffset(record.getBasisOffset())
@@ -94,7 +95,7 @@ public class PhysicalFlowDao {
                 .lastAttestedBy(Optional.ofNullable(record.getLastAttestedBy()))
                 .lastAttestedAt(Optional.ofNullable(record.getLastAttestedAt()).map(Timestamp::toLocalDateTime))
                 .isRemoved(record.getIsRemoved())
-                .externalId(Optional.ofNullable(record.getExternalId()))
+                .externalId(record.getExternalId())
                 .entityLifecycleStatus(EntityLifecycleStatus.valueOf(record.getEntityLifecycleStatus()))
                 .created(UserTimestamp.mkForUser(record.getCreatedBy(), record.getCreatedAt()))
                 .isReadOnly(record.getIsReadonly())
@@ -196,7 +197,12 @@ public class PhysicalFlowDao {
 
     public List<PhysicalFlow> findByAttributesAndSpecification(PhysicalFlow flow) {
 
+        Condition nameCondition = flow.name() == null
+                ? PHYSICAL_FLOW.NAME.isNull()
+                :PHYSICAL_FLOW.NAME.eq(flow.name());
+
         Condition sameFlow = PHYSICAL_FLOW.SPECIFICATION_ID.eq(flow.specificationId())
+                .and(nameCondition)
                 .and(PHYSICAL_FLOW.BASIS_OFFSET.eq(flow.basisOffset()))
                 .and(PHYSICAL_FLOW.FREQUENCY.eq(flow.frequency().value()))
                 .and(PHYSICAL_FLOW.TRANSPORT.eq(flow.transport().value()))
@@ -301,6 +307,7 @@ public class PhysicalFlowDao {
         PhysicalFlowRecord record = dsl.newRecord(PHYSICAL_FLOW);
         record.setLogicalFlowId(flow.logicalFlowId());
 
+        record.setName(flow.name());
         record.setFrequency(flow.frequency().value());
         record.setTransport(flow.transport().value());
         record.setBasisOffset(flow.basisOffset());
@@ -315,7 +322,8 @@ public class PhysicalFlowDao {
         record.setLastAttestedAt(flow.lastAttestedAt().map(Timestamp::valueOf).orElse(null));
         record.setIsRemoved(flow.isRemoved());
         record.setProvenance("waltz");
-        record.setExternalId(flow.externalId().orElse(null));
+
+        flow.externalId().ifPresent(record::setExternalId);
 
         record.setCreatedAt(flow.created().map(UserTimestamp::atTimestamp).orElse(Timestamp.valueOf(flow.lastUpdatedAt())));
         record.setCreatedBy(flow.created().map(UserTimestamp::by).orElse(flow.lastUpdatedBy()));

@@ -85,23 +85,23 @@ public class LogicalFlowDao {
     private static final Field<String> SOURCE_NAME_FIELD = InlineSelectFieldFactory.mkNameField(
             LOGICAL_FLOW.SOURCE_ENTITY_ID,
             LOGICAL_FLOW.SOURCE_ENTITY_KIND,
-            newArrayList(EntityKind.APPLICATION, EntityKind.ACTOR));
+            newArrayList(EntityKind.APPLICATION, EntityKind.ACTOR, EntityKind.END_USER_APPLICATION));
 
 
     private static final Field<String> TARGET_NAME_FIELD = InlineSelectFieldFactory.mkNameField(
             LOGICAL_FLOW.TARGET_ENTITY_ID,
             LOGICAL_FLOW.TARGET_ENTITY_KIND,
-            newArrayList(EntityKind.APPLICATION, EntityKind.ACTOR));
+            newArrayList(EntityKind.APPLICATION, EntityKind.ACTOR, EntityKind.END_USER_APPLICATION));
 
     private static final Field<String> SOURCE_EXTERNAL_ID_FIELD = InlineSelectFieldFactory.mkExternalIdField(
             LOGICAL_FLOW.SOURCE_ENTITY_ID,
             LOGICAL_FLOW.SOURCE_ENTITY_KIND,
-            newArrayList(EntityKind.APPLICATION, EntityKind.ACTOR));
+            newArrayList(EntityKind.APPLICATION, EntityKind.ACTOR, EntityKind.END_USER_APPLICATION));
 
     private static final Field<String> TARGET_EXTERNAL_ID_FIELD = InlineSelectFieldFactory.mkExternalIdField(
             LOGICAL_FLOW.TARGET_ENTITY_ID,
             LOGICAL_FLOW.TARGET_ENTITY_KIND,
-            newArrayList(EntityKind.APPLICATION, EntityKind.ACTOR));
+            newArrayList(EntityKind.APPLICATION, EntityKind.ACTOR, EntityKind.END_USER_APPLICATION));
 
 
     public static final RecordMapper<Record, LogicalFlow> TO_DOMAIN_MAPPER = r -> {
@@ -109,6 +109,7 @@ public class LogicalFlowDao {
 
         return ImmutableLogicalFlow.builder()
                 .id(record.getId())
+                .externalId(record.getExternalId())
                 .source(ImmutableEntityReference.builder()
                         .kind(EntityKind.valueOf(record.getSourceEntityKind()))
                         .id(record.getSourceEntityId())
@@ -150,6 +151,7 @@ public class LogicalFlowDao {
         record.setCreatedBy(flow.created().map(UserTimestamp::by).orElse(flow.lastUpdatedBy()));
         record.setIsReadonly(flow.isReadOnly());
         record.setIsRemoved(flow.isRemoved());
+        flow.externalId().ifPresent(record::setExternalId);
         return record;
     };
 
@@ -166,6 +168,13 @@ public class LogicalFlowDao {
     public LogicalFlowDao(DSLContext dsl) {
         checkNotNull(dsl, "dsl must not be null");
         this.dsl = dsl;
+    }
+
+
+    public LogicalFlow getByFlowExternalId(String externalId) {
+        return baseQuery()
+                .where(LOGICAL_FLOW.EXTERNAL_ID.eq(externalId))
+                .fetchOne(TO_DOMAIN_MAPPER);
     }
 
 
@@ -495,4 +504,5 @@ public class LogicalFlowDao {
             return operationsForFlow;
         }
     }
+
 }

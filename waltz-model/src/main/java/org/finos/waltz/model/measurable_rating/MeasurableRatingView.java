@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.finos.waltz.model.Nullable;
 import org.finos.waltz.model.allocation.Allocation;
 import org.finos.waltz.model.allocation_scheme.AllocationScheme;
-import org.finos.waltz.model.application.Application;
 import org.finos.waltz.model.measurable.Measurable;
+import org.finos.waltz.model.measurable_category.MeasurableCategory;
 import org.finos.waltz.model.measurable_rating_planned_decommission.MeasurableRatingPlannedDecommission;
 import org.finos.waltz.model.measurable_rating_replacement.MeasurableRatingReplacement;
 import org.finos.waltz.model.rating.RatingSchemeItem;
@@ -14,6 +14,11 @@ import org.immutables.value.Value;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Represents a single measurable rating.
+ * Should only be used when showing information singularly, typically on the
+ * MeasurableRating page:  (e.g. waltz/measurable-rating/1234)
+ */
 @Value.Immutable
 @JsonSerialize(as = ImmutableMeasurableRatingView.class)
 public abstract class MeasurableRatingView {
@@ -24,7 +29,7 @@ public abstract class MeasurableRatingView {
     public abstract Measurable measurable();
 
     @Nullable
-    public abstract Application application();
+    public abstract MeasurableCategory category();
 
     @Nullable
     public abstract RatingSchemeItem rating();

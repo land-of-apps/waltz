@@ -63,6 +63,14 @@ export const additionalColumnOptions = {
     PRIMARY: {
         key: "PRIMARY",
         name: "Primary",
+    },
+    VALUES_ONLY: {
+        key: "VALUES_ONLY",
+        name: "Values Only",
+    },
+    VALUES_AND_OUTCOMES: {
+        key: "VALUES_AND_OUTCOMES",
+        name: "Values and Outcomes",
     }
 }
 
@@ -413,7 +421,7 @@ export function combineColDefs(definition) {
 }
 
 
-export function prepareTableData(instance, columnDefs) {
+export function prepareData(instance, columnDefs) {
 
     if (_.isEmpty(columnDefs)) {
         return [];

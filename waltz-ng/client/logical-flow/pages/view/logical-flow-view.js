@@ -24,6 +24,8 @@ import {CORE_API} from "../../../common/services/core-api-utils";
 import toasts from "../../../svelte-stores/toast-store";
 import _ from "lodash";
 import {displayError} from "../../../common/error-utils";
+import AlignedDataTypesList from "../../components/aligned-data-types-list/AlignedDataTypesList.svelte";
+import {copyTextToClipboard} from "../../../common/browser-utils";
 
 
 const initialState = {
@@ -32,7 +34,8 @@ const initialState = {
     isRemoved: false,
     canEdit: false,
     canRestore: false,
-    canRemove: false
+    canRemove: false,
+    AlignedDataTypesList
 };
 
 
@@ -40,7 +43,8 @@ function controller($q,
                     $state,
                     $stateParams,
                     $window,
-                    serviceBroker)
+                    serviceBroker,
+                    historyStore)
 {
     const vm = initialiseData(this, initialState);
 
@@ -57,7 +61,17 @@ function controller($q,
             .loadViewData(
                 CORE_API.LogicalFlowStore.getById,
                 [ flowId ])
-            .then(r => vm.logicalFlow = r.data);
+            .then(r => vm.logicalFlow = r.data)
+
+
+        flowPromise
+            .then(r => {
+                historyStore.put(
+                    `Logical Flow: ${vm.logicalFlow.source.name} to ${vm.logicalFlow.target.name}`,
+                    "LOGICAL_DATA_FLOW",
+                    "main.logical-flow.view",
+                    { id: flowId });
+            });
 
         const permissionPromise = serviceBroker
             .loadViewData(
@@ -126,6 +140,13 @@ function controller($q,
             restoreLogicalFlow();
         }
     };
+
+    vm.sharePageLink = () => {
+        const viewUrl = $state.href("main.logical-flow.external-id", { externalId: vm.logicalFlow.externalId });
+        copyTextToClipboard(`${$window.location.origin}${viewUrl}`)
+            .then(() => toasts.success("Copied link to clipboard"))
+            .catch(e => displayError("Could not copy link to clipboard", e));
+    }
 }
 
 
@@ -134,7 +155,8 @@ controller.$inject = [
     "$state",
     "$stateParams",
     "$window",
-    "ServiceBroker"
+    "ServiceBroker",
+    "HistoryStore"
 ];
 
 

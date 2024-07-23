@@ -36,7 +36,6 @@ import org.jooq.Record1;
 import org.jooq.Result;
 import org.jooq.Select;
 import org.jooq.SelectConditionStep;
-import org.jooq.impl.DSL;
 import org.jooq.lambda.tuple.Tuple3;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -55,7 +54,6 @@ import static org.finos.waltz.schema.Tables.ENUM_VALUE;
 import static org.finos.waltz.schema.Tables.PHYSICAL_FLOW;
 import static org.finos.waltz.schema.Tables.TAG;
 import static org.finos.waltz.schema.Tables.TAG_USAGE;
-import static org.finos.waltz.schema.tables.Application.APPLICATION;
 import static org.finos.waltz.schema.tables.LogicalFlow.LOGICAL_FLOW;
 import static org.finos.waltz.schema.tables.PhysicalSpecification.PHYSICAL_SPECIFICATION;
 import static spark.Spark.post;
@@ -68,6 +66,7 @@ public class PhysicalFlowExtractor extends CustomDataExtractor {
     private static final List<Field<String>> SOURCE_NAME_AND_ASSET_CODE_FIELDS;
     private static final List<Field<String>> SOURCE_AND_TARGET_NAME_AND_ASSET_CODE;
     private static final PhysicalFlowIdSelectorFactory physicalFlowIdSelectorFactory = new PhysicalFlowIdSelectorFactory();
+    public static final Field<Long> PHYS_FLOW_ID = PHYSICAL_FLOW.ID.as("Waltz Id");
 
 
     private final DSLContext dsl;
@@ -77,13 +76,12 @@ public class PhysicalFlowExtractor extends CustomDataExtractor {
         Field<String> SOURCE_NAME_FIELD = InlineSelectFieldFactory.mkNameField(
                 LOGICAL_FLOW.SOURCE_ENTITY_ID,
                 LOGICAL_FLOW.SOURCE_ENTITY_KIND,
-                newArrayList(EntityKind.APPLICATION, EntityKind.ACTOR));
+                newArrayList(EntityKind.APPLICATION, EntityKind.ACTOR, EntityKind.END_USER_APPLICATION));
 
-        Field<String> sourceAssetCodeField = DSL
-                .when(LOGICAL_FLOW.SOURCE_ENTITY_KIND.eq(EntityKind.APPLICATION.name()),
-                        DSL.select(APPLICATION.ASSET_CODE)
-                                .from(APPLICATION)
-                                .where(APPLICATION.ID.eq(LOGICAL_FLOW.SOURCE_ENTITY_ID)));
+        Field<String> sourceAssetCodeField = InlineSelectFieldFactory.mkExternalIdField(
+                LOGICAL_FLOW.SOURCE_ENTITY_ID,
+                LOGICAL_FLOW.SOURCE_ENTITY_KIND,
+                newArrayList(EntityKind.APPLICATION, EntityKind.ACTOR, EntityKind.END_USER_APPLICATION));
 
         SOURCE_NAME_AND_ASSET_CODE_FIELDS = ListUtilities.asList(
                 SOURCE_NAME_FIELD.as("Source"),
@@ -92,13 +90,12 @@ public class PhysicalFlowExtractor extends CustomDataExtractor {
         Field<String> TARGET_NAME_FIELD = InlineSelectFieldFactory.mkNameField(
                 LOGICAL_FLOW.TARGET_ENTITY_ID,
                 LOGICAL_FLOW.TARGET_ENTITY_KIND,
-                newArrayList(EntityKind.APPLICATION, EntityKind.ACTOR));
+                newArrayList(EntityKind.APPLICATION, EntityKind.ACTOR, EntityKind.END_USER_APPLICATION));
 
-        Field<String> targetAssetCodeField = DSL
-                .when(LOGICAL_FLOW.TARGET_ENTITY_KIND.eq(EntityKind.APPLICATION.name()),
-                        DSL.select(APPLICATION.ASSET_CODE)
-                                .from(APPLICATION)
-                                .where(APPLICATION.ID.eq(LOGICAL_FLOW.TARGET_ENTITY_ID)));
+        Field<String> targetAssetCodeField = InlineSelectFieldFactory.mkExternalIdField(
+                LOGICAL_FLOW.TARGET_ENTITY_ID,
+                LOGICAL_FLOW.TARGET_ENTITY_KIND,
+                newArrayList(EntityKind.APPLICATION, EntityKind.ACTOR, EntityKind.END_USER_APPLICATION));
 
         RECEIVER_NAME_AND_ASSET_CODE_FIELDS = ListUtilities.asList(
                 TARGET_NAME_FIELD.as("Receiver"),
@@ -231,9 +228,11 @@ public class PhysicalFlowExtractor extends CustomDataExtractor {
 
         return dsl
                 .select(
-                        PHYSICAL_FLOW.ID,
-                        PHYSICAL_SPECIFICATION.NAME.as("Name"),
-                        PHYSICAL_FLOW.EXTERNAL_ID.as("External Id"))
+                        PHYS_FLOW_ID,
+                        PHYSICAL_FLOW.NAME.as("Name"),
+                        PHYSICAL_FLOW.EXTERNAL_ID.as("External Id"),
+                        PHYSICAL_SPECIFICATION.NAME.as("Specification Name"),
+                        PHYSICAL_SPECIFICATION.EXTERNAL_ID.as("Specification External Id"))
                 .select(SOURCE_AND_TARGET_NAME_AND_ASSET_CODE)
                 .select(
                         dataFormatKindValue.DISPLAY_NAME.as("Format"),
@@ -286,7 +285,7 @@ public class PhysicalFlowExtractor extends CustomDataExtractor {
                     List<Object> reportRow = ListUtilities.map(
                             qry.getSelect(),
                             row::get);
-                    Long physicalFlowId = row.get(PHYSICAL_FLOW.ID);
+                    Long physicalFlowId = row.get(PHYS_FLOW_ID);
                     List<String> physicalFlowTags = tags.get(physicalFlowId);
                     reportRow.add(isEmpty(physicalFlowTags)
                             ? ""

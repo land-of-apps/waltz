@@ -7,13 +7,14 @@ import Icon from "../../../../../common/svelte/Icon.svelte";
 import AssessmentFilters from "./AssessmentFilters.svelte";
 import InboundOutboundFilters from "./InboundOutboundFilters.svelte";
 import PhysicalFlowAttributeFilters from "./PhysicalFlowAttributeFilters.svelte";
-import DataTypeFilters from "./DataTypeFilters.svelte";
 import FlowClassificationFilters from "./FlowClassificationFilters.svelte";
+import SourceTargetKindFilters from "./SourceTargetKindFilters.svelte";
 
 export let dataTypes = [];
 export let assessmentFilters = [];
 export let physicalFlows = [];
 export let flowClassifications = [];
+export let isAggregateView = false;
 
 
 $: classificationFilter = _.find($filters, d => d.kind === FilterKinds.FLOW_CLASSIFICATION);
@@ -32,18 +33,20 @@ $: directionFilter = _.find($filters, d => d.kind === FilterKinds.DIRECTION);
         {/if}
     </summary>
 
-    <details class="filter-set" style="margin-top: 1em">
-        <summary>
-            <Icon name="random"/> Flow Direction
-            {#if !_.isEqual(_.get(directionFilter, ["direction"], Directions.ALL), Directions.ALL)}
-                <span style="color: darkorange"
-                      title="Flows have been filtered by direction">
-                    <Icon name="exclamation-circle"/>
-                </span>
-            {/if}
-        </summary>
-        <InboundOutboundFilters/>
-    </details>
+    {#if isAggregateView === false}
+        <details class="filter-set" style="margin-top: 1em">
+            <summary>
+                <Icon name="random"/> Flow Direction
+                {#if !_.isEqual(_.get(directionFilter, ["direction"], Directions.ALL), Directions.ALL)}
+                    <span style="color: darkorange"
+                          title="Flows have been filtered by direction">
+                        <Icon name="exclamation-circle"/>
+                    </span>
+                {/if}
+            </summary>
+            <InboundOutboundFilters/>
+        </details>
+    {/if}
 
     <details class="filter-set" style="margin-top: 1em">
         <summary>
@@ -60,15 +63,15 @@ $: directionFilter = _.find($filters, d => d.kind === FilterKinds.DIRECTION);
 
     <details class="filter-set">
         <summary>
-            <Icon name="qrcode"/> Data Types
-            {#if _.some($filters, d => d.kind === FilterKinds.DATA_TYPE)}
+            <Icon name="qrcode"/> Source / Target Types
+            {#if _.some($filters, d => d.kind === FilterKinds.NODE_KIND)}
                 <span style="color: darkorange"
-                      title="Data type filters have been applied">
+                      title="Source and/or Target type filters have been applied">
                     <Icon name="exclamation-circle"/>
                 </span>
             {/if}
         </summary>
-        <DataTypeFilters {dataTypes}/>
+        <SourceTargetKindFilters {dataTypes}/>
     </details>
 
     <details class="filter-set">
