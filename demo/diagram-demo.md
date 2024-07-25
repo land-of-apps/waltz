@@ -39,7 +39,14 @@ Refined with these prompts:
 
 ![image](erd-waltz-statistics.png)
 
+## Demo flow
 
-***Open question: should we synch the Land of Apps fork of Waltz with the main Waltz repo? If not these issues will fall way out of date.***
+Create visual explanations of your codebase effortlessly. Class Diagrams, Sequence Diagrams, ERD, Flow Charts, make your development process smoother. 
+
+Video: diagram-command-oveview.mp4
+
+Level up your workflow. Generate detailed diagrams to understand and explain code better. Exportable to the Mermaid live editor.
+
+Video: open-in-mermaid-live-editor.mp4
 
 
