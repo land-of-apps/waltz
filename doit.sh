@@ -10,6 +10,10 @@ psql -p 5432 -U waltz -h localhost -d waltz -c "CREATE EXTENSION IF NOT EXISTS p
 pg_restore -p 5432 -U waltz -h localhost -d waltz < ~/Downloads/postgres-dump-1.47.1.sql.gz
 # bring schema up to date
 mvn -s .build.settings.xml compile -P waltz-postgres,dev-postgres -f waltz-schema/pom.xml -DskipTests=true
+# running mvn clean doesn't clean out the compiled frontend code in waltz-ng, so you may want to
+# rm -rf waltz-ng/dist
+# and maybe
+# rm -rf waltz-ng/node_modules
 # build package
 mvn -s .build.settings.xml clean package -P waltz-postgres,dev-postgres -DskipTests=true
 
