@@ -1,0 +1,1 @@
+@diagram /noprojectinfo /include=\.js|\.java /exclude=\b[Tt]est\b Create a class diagram for the feature "attestation pre checks, a subfeature of  attestation management", using the provided documentation as a guide.

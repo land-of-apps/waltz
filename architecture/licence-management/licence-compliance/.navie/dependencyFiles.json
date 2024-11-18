@@ -1,0 +1,10 @@
+[
+  "waltz-data/src/main/java/org/finos/waltz/data/licence/LicenceDao.java",
+  "waltz-jobs/src/main/java/org/finos/waltz/jobs/generators/LicenceGenerator.java",
+  "waltz-jobs/src/main/java/org/finos/waltz/jobs/tools/importers/licence/finos/ComplianceTerm.java",
+  "waltz-jobs/src/main/java/org/finos/waltz/jobs/tools/importers/licence/finos/ComplianceUseCase.java",
+  "waltz-jobs/src/main/java/org/finos/waltz/jobs/tools/importers/licence/finos/FinosLicenceComplianceImporter.java",
+  "waltz-jobs/src/main/java/org/finos/waltz/jobs/tools/importers/licence/finos/LicenceCompliance.java",
+  "waltz-jobs/src/main/java/org/finos/waltz/jobs/tools/importers/licence/spdx/SpdxLicenceImporter.java",
+  "waltz-model/src/main/java/org/finos/waltz/model/EntityKind.java"
+]

@@ -1,0 +1,12 @@
+[
+  "waltz-data/src/main/java/org/finos/waltz/data/attestation/AttestationPreCheckDao.java",
+  "waltz-jobs/src/main/java/org/finos/waltz/jobs/harness/AttestationPreCheckEvaluatorDaoHarness.java",
+  "waltz-model/src/main/java/org/finos/waltz/model/attestation/LogicalFlowAttestationPreChecks.java",
+  "waltz-ng/client/attestation/components/confirmation/attestation-confirmation.js",
+  "waltz-ng/client/attestation/index.js",
+  "waltz-ng/client/attestation/services/attestation-pre-check-store.js",
+  "waltz-ng/client/common/services/core-api-utils.js",
+  "waltz-service/src/main/java/org/finos/waltz/service/attestation/AttestationInstanceService.java",
+  "waltz-service/src/main/java/org/finos/waltz/service/attestation/AttestationPreCheckService.java",
+  "waltz-web/src/main/java/org/finos/waltz/web/endpoints/api/AttestationPreCheckEndpoint.java"
+]

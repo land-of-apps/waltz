@@ -1,0 +1,1 @@
+@diagram /noprojectinfo /include=\.java /exclude=\b[Tt]est\b Create a class diagram for the feature "licence compliance, a subfeature of  licence management", using the provided documentation as a guide.

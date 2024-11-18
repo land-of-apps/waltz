@@ -1,0 +1,1 @@
+@explain /noprojectinfo /include=\.java /exclude=\b[Tt]est\b Document the feature "licence compliance, a subfeature of  licence management"
