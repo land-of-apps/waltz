@@ -28,7 +28,7 @@
             <id>dev-postgres</id>
             <activation><activeByDefault>false</activeByDefault></activation>
             <properties>
-                <database.url>jdbc:postgresql://localhost:5432/waltz</database.url>
+                <database.url>jdbc:postgresql://localhost:5555/waltz</database.url>
                 <database.user>waltz</database.user>
                 <database.password>waltz</database.password>
                 <database.schema>public</database.schema>
