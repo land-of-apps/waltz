@@ -105,13 +105,21 @@ public class UserEndpoint implements Endpoint {
             return userService.registerNewUser(userRegRequest) == 1;
         };
 
-        DatumRoute<Integer> updateRolesRoute = (request, response) -> {
+        DatumRoute<UserRoleUpdateResult> updateRolesRoute = (request, response) -> {
             ensureUserHasAdminRights(request);
 
-            String userName = WebUtilities.getUsername(request);
-            String targetUserName = request.params("userName");
-            UpdateRolesCommand cmd = WebUtilities.readBody(request, UpdateRolesCommand.class);
-            return userRoleService.updateRoles(userName, targetUserName, cmd);
+            try {
+                String userName = WebUtilities.getUsername(request);
+                String targetUserName = request.params("userName");
+                UpdateRolesCommand cmd = WebUtilities.readBody(request, UpdateRolesCommand.class);
+                return userRoleService.updateRoles(userName, targetUserName, cmd);
+            } catch (SecurityException e) {
+                response.status(403);
+                return UserRoleUpdateResult.failure(e.getMessage());
+            } catch (Exception e) {
+                response.status(500);
+                return UserRoleUpdateResult.failure("An error occurred while updating roles: " + e.getMessage());
+            }
         };
 
         DatumRoute<Boolean> resetPasswordRoute = (request, response) -> {

@@ -140,29 +140,37 @@ public class UserRoleService {
     }
 
 
-    public int updateRoles(String userName, String targetUserName, UpdateRolesCommand command) {
-        LOG.info("Updating roles for userName: {}, new roles: {}", targetUserName, command.roles());
+    public UserRoleUpdateResult updateRoles(String userName, String targetUserName, UpdateRolesCommand command) {
+        LOG.info("Attempting to update roles for userName: {}, new roles: {}", targetUserName, command.roles());
+
+        if (userName.equalsIgnoreCase(targetUserName)) {
+            String message = format("Administrator [%s] attempted to modify their own roles", userName);
+            LOG.warn(message);
+            throw new SecurityException(message);
+        }
 
         Person person = personService.getPersonByUserId(targetUserName);
         if(person == null) {
             LOG.warn("{} does not exist, cannot create audit log for role updates", targetUserName);
-        } else {
-            ImmutableChangeLog logEntry = ImmutableChangeLog.builder()
-                    .parentReference(mkRef(EntityKind.PERSON, person.id().get()))
-                    .severity(Severity.INFORMATION)
-                    .userId(userName)
-                    .message(format(
-                            "Roles for %s updated to %s.  Comment: %s",
-                            targetUserName,
-                            sort(command.roles()),
-                            StringUtilities.ifEmpty(command.comment(), "none")))
-                    .childKind(Optional.empty())
-                    .operation(Operation.UPDATE)
-                    .build();
-            changeLogService.write(logEntry);
+            return UserRoleUpdateResult.failure("Target user does not exist");
         }
 
-        return userRoleDao.updateRoles(targetUserName, command.roles());
+        ImmutableChangeLog logEntry = ImmutableChangeLog.builder()
+                .parentReference(mkRef(EntityKind.PERSON, person.id().get()))
+                .severity(Severity.INFORMATION)
+                .userId(userName)
+                .message(format(
+                        "Roles for %s updated to %s. Comment: %s",
+                        targetUserName,
+                        sort(command.roles()),
+                        StringUtilities.ifEmpty(command.comment(), "none")))
+                .childKind(Optional.empty())
+                .operation(Operation.UPDATE)
+                .build();
+        changeLogService.write(logEntry);
+
+        userRoleDao.updateRoles(targetUserName, command.roles());
+        return UserRoleUpdateResult.success(format("Successfully updated roles for user %s", targetUserName));
     }
 
 
