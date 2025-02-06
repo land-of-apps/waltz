@@ -90,7 +90,7 @@
         <jbcrypt.version>0.4.3</jbcrypt.version>
         <jgrapht.version>1.4.0</jgrapht.version>
         <jool.version>0.9.15</jool.version>
-        <jooq.version>3.13.2</jooq.version> <!--If this changes see issue #4553 -->
+        <jooq.version>3.16.23</jooq.version> <!--If this changes see issue #4553 -->
         <junit.version>5.10.0</junit.version>
         <jwt.version>4.3.0</jwt.version>
         <mockito.version>4.11.0</mockito.version>  <!-- 5.3.1 is 9+ -->
