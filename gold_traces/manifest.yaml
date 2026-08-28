@@ -1,0 +1,37 @@
+# Gold-traces manifest — gold_traces/manifest.yaml (managed by the appmap-gold-traces skill).
+#
+# Commands run from this file's parent directory (the repo root). Recordings are
+# read from the repo-root appmap.yml (appmap_dir: tmp/appmap).
+#
+# Prerequisites: see docs/development/appmap.md — JDK 17 and a Postgres for the
+# waltz-schema build (Liquibase + jOOQ codegen) at localhost:5435.
+
+schema_version: 1
+
+commands:
+  record: "mvn -B -P waltz-postgres,integration-tests -pl $(echo {test_file} | cut -d/ -f1) -am -Ddatabase.url=jdbc:postgresql://localhost:5435/waltz -Ddatabase.user=waltz -Ddatabase.password=waltz -Ddatabase.schema=public -Dtarget.db=postgres -Dtest=$(basename {test_file} .java)#{test_name} -Dsurefire.failIfNoSpecifiedTests=false test"
+
+  record_env:
+    JAVA_HOME: /Users/kgilpin/Library/Java/JavaVirtualMachines/jbr-17.0.6/Contents/Home
+
+entries:
+  - feature: app-group
+    test_file: waltz-integration-test/src/test/java/org/finos/waltz/integration_test/inmem/dao/AppGroupDaoTest.java
+    test_name: usingAppSelectorWithAPlainAppGroupWorks
+    appmap_path: junit/org_finos_waltz_integration_test_inmem_dao_AppGroupDaoTest_usingAppSelectorWithAPlainAppGroupWorks.appmap.json
+    summary: App-group selector resolves member applications through AppGroupDao with SQL.
+  - feature: application
+    test_file: waltz-integration-test/src/test/java/org/finos/waltz/integration_test/inmem/dao/ApplicationDaoTest.java
+    test_name: usingAppSelectorWithAnOrgUnitWorks
+    appmap_path: junit/org_finos_waltz_integration_test_inmem_dao_ApplicationDaoTest_usingAppSelectorWithAnOrgUnitWorks.appmap.json
+    summary: Application lookup by org-unit selector through ApplicationDao and the org-unit hierarchy.
+  - feature: logical-flow
+    test_file: waltz-integration-test/src/test/java/org/finos/waltz/integration_test/inmem/dao/LogicalFlowTest.java
+    test_name: bySelector
+    appmap_path: junit/org_finos_waltz_integration_test_inmem_dao_LogicalFlowTest_bySelector.appmap.json
+    summary: Logical flow retrieval by id-selector through LogicalFlowDao.
+  - feature: measurable-rating
+    test_file: waltz-integration-test/src/test/java/org/finos/waltz/integration_test/inmem/dao/MeasurableRatingDaoTest.java
+    test_name: ratingsCanBeSaved
+    appmap_path: junit/org_finos_waltz_integration_test_inmem_dao_MeasurableRatingDaoTest_ratingsCanBeSaved.appmap.json
+    summary: Measurable rating save path including changelog write and rating re-read.
