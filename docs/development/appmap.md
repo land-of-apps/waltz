@@ -20,7 +20,8 @@ psql -h localhost -p 5435 -U postgres -c "CREATE USER waltz WITH PASSWORD 'waltz
 psql -h localhost -p 5435 -U postgres -c "CREATE DATABASE waltz OWNER waltz;"
 ```
 
-Common database flags used below:
+Common database flags used below (note: in zsh use `${=DB_FLAGS}` when
+expanding, since zsh does not word-split unquoted variables):
 
 ```sh
 DB_FLAGS="-Ddatabase.url=jdbc:postgresql://localhost:5435/waltz \
