@@ -1,0 +1,5 @@
+name: waltz
+language: java
+appmap_dir: tmp/appmap
+packages:
+- path: org.finos.waltz
