@@ -30,6 +30,31 @@ entries:
     test_name: bySelector
     appmap_path: junit/org_finos_waltz_integration_test_inmem_dao_LogicalFlowTest_bySelector.appmap.json
     summary: Logical flow retrieval by id-selector through LogicalFlowDao.
+  - feature: proposed-flow
+    test_file: waltz-integration-test/src/test/java/org/finos/waltz/integration_test/inmem/service/ProposedFlowWorkflowServiceTest.java
+    test_name: testProposedNewFlow
+    appmap_path: junit/org_finos_waltz_integration_test_inmem_service_ProposedFlowWorkflowServiceTest_testProposedNewFlow.appmap.json
+    summary: Maker path - proposing a new flow creates the workflow instance and proposed-flow record.
+  - feature: proposed-flow
+    test_file: waltz-integration-test/src/test/java/org/finos/waltz/integration_test/inmem/service/ProposedFlowWorkflowServiceTest.java
+    test_name: testCannotApproveProposedFlowTwice
+    appmap_path: junit/org_finos_waltz_integration_test_inmem_service_ProposedFlowWorkflowServiceTest_testCannotApproveProposedFlowTwice.appmap.json
+    summary: Checker guard negative branch - a second approval of the same proposed flow is rejected.
+  - feature: proposed-flow-permissions
+    test_file: waltz-integration-test/src/test/java/org/finos/waltz/integration_test/inmem/service/ProposedFlowWorkflowPermissionServiceTest.java
+    test_name: testShouldBuildPermissionWithCorrectOperationSets
+    appmap_path: junit/org_finos_waltz_integration_test_inmem_service_ProposedFlowWorkflowPermissionServiceTest_testShouldBuildPermissionWithCorrectOperationSets.appmap.json
+    summary: Permission sets built for an involved user on a proposed flow.
+  - feature: proposed-flow-permissions
+    test_file: waltz-integration-test/src/test/java/org/finos/waltz/integration_test/inmem/service/ProposedFlowWorkflowPermissionServiceTest.java
+    test_name: negative_userHasNoInvolvement
+    appmap_path: junit/org_finos_waltz_integration_test_inmem_service_ProposedFlowWorkflowPermissionServiceTest_negative_userHasNoInvolvement.appmap.json
+    summary: Permission negative branch - a user with no involvement gets no operations.
+  - feature: data-flow
+    test_file: waltz-integration-test/src/test/java/org/finos/waltz/integration_test/inmem/service/DataFlowServiceTest.java
+    test_name: testWhenLogicalFlowIdIsNotPresentThenCreatesBothLogicalAndPhysicalFlow
+    appmap_path: junit/org_finos_waltz_integration_test_inmem_service_DataFlowServiceTest_testWhenLogicalFlowIdIsNotPresentThenCreatesBothLogicalAndPhysicalFlow.appmap.json
+    summary: Approval materialization - creates both logical and physical flows plus specification.
   - feature: measurable-rating
     test_file: waltz-integration-test/src/test/java/org/finos/waltz/integration_test/inmem/dao/MeasurableRatingDaoTest.java
     test_name: ratingsCanBeSaved
