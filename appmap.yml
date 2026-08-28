@@ -3,3 +3,7 @@ language: java
 appmap_dir: tmp/appmap
 packages:
 - path: org.finos.waltz
+  exclude:
+  - org.finos.waltz.schema
+  - org.finos.waltz.model
+  - org.finos.waltz.common.Checks
