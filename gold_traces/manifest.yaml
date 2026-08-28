@@ -30,6 +30,11 @@ entries:
     test_name: bySelector
     appmap_path: junit/org_finos_waltz_integration_test_inmem_dao_LogicalFlowTest_bySelector.appmap.json
     summary: Logical flow retrieval by id-selector through LogicalFlowDao.
+  - feature: cost
+    test_file: waltz-integration-test/src/test/java/org/finos/waltz/integration_test/inmem/dao/CostDaoTest.java
+    test_name: findTopCostsRespectsLimitAndOrdersByAmountDesc
+    appmap_path: junit/org_finos_waltz_integration_test_inmem_dao_CostDaoTest_findTopCostsRespectsLimitAndOrdersByAmountDesc.appmap.json
+    summary: Top-N cost lookup through CostDao.findTopCostsForCostKindAndSelector with SQL LIMIT pushed into the query.
   - feature: measurable-rating
     test_file: waltz-integration-test/src/test/java/org/finos/waltz/integration_test/inmem/dao/MeasurableRatingDaoTest.java
     test_name: ratingsCanBeSaved
